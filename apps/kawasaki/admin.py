@@ -3,6 +3,10 @@ from django.contrib import admin
 from .models import Patient, BloodTest, LiverFunction, Echocardiography, OtherTest
 
 
+admin.site.site_title = 'Medata'
+admin.site.site_header = 'Patients Medical Data System'
+
+
 class BloodTestInline(admin.TabularInline):
     model = BloodTest
     extra = 1
