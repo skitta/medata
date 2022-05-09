@@ -1,6 +1,13 @@
 from django.db import models
 
 
+class EnrollGroup(models.Model):
+    name = models.CharField(max_length=20)
+
+    def __str__(self):
+        return "{}".format(self.name)
+
+
 class Patient(models.Model):
     registered_ID = models.CharField(max_length=8, unique=True)
     document_ID = models.CharField(max_length=7, null=True)
@@ -14,6 +21,7 @@ class Patient(models.Model):
     in_date = models.DateField()
     weight = models.FloatField()
     height = models.FloatField()
+    group = models.ForeignKey(EnrollGroup, on_delete=models.CASCADE)
     
     def __str__(self):
         return "{name}({id})".format(name=self.full_name, id=self.registered_ID)
@@ -48,9 +56,9 @@ class Echocardiography(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     date = models.DateField()
     lmca = models.FloatField()
-    lmca_z = models.FloatField(null=True, editable=False)
+    lmca_z = models.FloatField(null=True)
     rca = models.FloatField()
-    rca_z = models.FloatField(null=True, editable=False)
+    rca_z = models.FloatField(null=True)
 
     def __str__(self):
         return "{patient}({date})".format(patient=self.patient.full_name, date=self.date)
@@ -65,4 +73,3 @@ class OtherTest(models.Model):
 
     def __str__(self):
         return "{patient}({date})".format(patient=self.patient.full_name, date=self.date)
-

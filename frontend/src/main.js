@@ -1,15 +1,13 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
-
-// import iView from 'iview'
-import 'iview/dist/styles/iview.css'
-
 import router from './router'
+import axios from 'axios'
+import store from './store'
 
-// Vue.use(iView)
-Vue.config.productionTip = false
+const app = createApp(App)
 
-new Vue({
-  router,
-  render: h => h(App)
-}).$mount('#app')
+app.config.globalProperties.$http = axios
+
+axios.defaults.baseURL = 'http://127.0.0.1:8000/api'
+
+app.use(store).use(router).mount('#app')

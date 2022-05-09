@@ -8,6 +8,10 @@ from bs4 import BeautifulSoup
 # 计算过程未知
 # 该网站的算法是基于日本儿童的冠脉管径数据库
 def get_z_score(gender, height, weight, rca, lmca):
+    """
+
+    :rtype: object
+    """
     conn = http.client.HTTPConnection("cgi.geocities.jp")
     headers = {
         'content-type': "application/x-www-form-urlencoded",

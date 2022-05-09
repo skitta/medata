@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Patient, BloodTest, LiverFunction, Echocardiography, OtherTest
+from .models import Patient, BloodTest, LiverFunction, Echocardiography, OtherTest, EnrollGroup
 
 
 admin.site.site_title = 'Medata'
@@ -27,9 +27,14 @@ class OtherTestInline(admin.TabularInline):
     extra = 1
 
 
+@admin.register(EnrollGroup)
+class EnrollGroupAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+
+
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ('registered_ID', 'full_name', 'in_date')
+    list_display = ('registered_ID', 'full_name', 'in_date', 'group')
     inlines = [BloodTestInline, LiverFunctionInline, EchocardiographyInline, OtherTestInline]
 
 
