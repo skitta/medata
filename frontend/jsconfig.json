@@ -9,11 +9,13 @@
         "src/*"
       ]
     },
+    "jsx": "preserve",
     "lib": [
       "esnext",
       "dom",
       "dom.iterable",
       "scripthost"
-    ]
+    ],
+    
   }
 }

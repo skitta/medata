@@ -1,22 +1,22 @@
 import numpy as np
 import pandas as pd
 
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
-
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import filters
 
 # from scripts import zScord
 
 from .models import Patient, Echocardiography, BloodTest, LiverFunction, EnrollGroup
-from .serializers import PatientSerializer, BloodTestSerializer, LiverFunctionSerializer, EchocardiographySerializer
+from .serializers import PatientSerializer, BloodTestSerializer, LiverFunctionSerializer, EchocardiographySerializer, EnrollGroupSerializer
 
 
 class PatientViewSet(viewsets.ModelViewSet):
-    queryset = Patient.objects.all()
+    queryset = Patient.objects.all().order_by('id')
     serializer_class = PatientSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['=registered_ID']
 
 
 class BloodTestViewSet(viewsets.ModelViewSet):
@@ -32,6 +32,11 @@ class LiverFunctionViewSet(viewsets.ModelViewSet):
 class EchocardiographyViewSet(viewsets.ModelViewSet):
     queryset = Echocardiography.objects.all()
     serializer_class = EchocardiographySerializer
+
+
+class EnrollGroupViewSet(viewsets.ModelViewSet):
+    queryset = EnrollGroup.objects.all()
+    serializer_class = EnrollGroupSerializer
 
 
 class PatientSummaryView(APIView):
@@ -69,6 +74,7 @@ class PatientSummaryView(APIView):
         return Response(summary)
 
 
+# !!! do not delete
 # def update_z_score(request):
 #     all_echos = Echocardiography.objects.all()
 #     count = 0

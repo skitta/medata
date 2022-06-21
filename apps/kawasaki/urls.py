@@ -8,6 +8,7 @@ routers.register(r'patients', views.PatientViewSet)
 routers.register(r'bloodTests', views.BloodTestViewSet)
 routers.register(r'liverFunction', views.LiverFunctionViewSet)
 routers.register(r'echocardiography', views.EchocardiographyViewSet)
+routers.register(r'enrollGroups', views.EnrollGroupViewSet)
 
 urlpatterns = [
     path('', include(routers.urls)),

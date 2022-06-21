@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Patient, BloodTest, LiverFunction, Echocardiography
+from .models import Patient, BloodTest, LiverFunction, Echocardiography, EnrollGroup
 
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -24,4 +24,10 @@ class LiverFunctionSerializer(serializers.ModelSerializer):
 class EchocardiographySerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Echocardiography
+		fields = '__all__'
+
+
+class EnrollGroupSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = EnrollGroup
 		fields = '__all__'

@@ -1,14 +1,23 @@
 <template>
-  <div>
+  <a-config-provider :locale="zhCN">
     <router-view></router-view>
-  </div>
+  </a-config-provider>
 </template>
 
 <script>
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
+import { ConfigProvider } from "ant-design-vue";
+import zhCN from 'ant-design-vue/es/locale/zh_CN';
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
+
+dayjs.locale('zh-cn');
 
 export default defineComponent({
+  components: {
+    AConfigProvider: ConfigProvider,
+  },
   setup() {
     const store = useStore();
 
@@ -20,7 +29,10 @@ export default defineComponent({
       sessionStorage.setItem("store", JSON.stringify(store.state));
     });
 
-    return {};
+    return {
+      zhCN,
+      dayjs,
+    };
   },
 });
 </script>

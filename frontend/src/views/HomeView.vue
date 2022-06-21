@@ -15,13 +15,13 @@
           </template>
           总览
         </a-menu-item>
-        <a-menu-item key="2">
+        <a-menu-item key="add">
           <template #icon>
             <plus-square-outlined />
           </template>
           添加
         </a-menu-item>
-        <a-menu-item key="3">
+        <a-menu-item key="manager">
           <template #icon>
             <user-outlined />
           </template>
@@ -96,7 +96,7 @@ export default defineComponent({
 });
 </script>
 
-<style>
+<style scoped>
 .layout-content {
   padding: 24px;
   margin-top: 20px;
