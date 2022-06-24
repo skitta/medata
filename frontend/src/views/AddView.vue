@@ -5,20 +5,21 @@
         <a-card title="患者信息">
           <a-patient-detail :patient="patient" />
           <a-divider />
-          <a-inline-form name="BloodTest" label="血常规" :fields="bloodTest" />
+          <a-inline-form name="bloodTests" label="血常规" :fields="bloodTest" />
           <a-divider />
-          <a-inline-form name="LiverFunction" label="肝功能" :fields="liverFunction" span="6" />
+          <a-inline-form name="liverFunction" label="肝功能" :fields="liverFunction" span="6" />
           <a-divider />
-          <a-inline-form name="Echocardiography" label="心脏彩超" :fields="echocardiography" span="4" />
+          <a-inline-form name="echocardiography" label="心脏彩超" :fields="echocardiography" span="4" />
           <a-divider />
-          <a-inline-form name="OtherTest" label="其他辅助检查" :fields="otherTest" span="9" />
+          <a-inline-form name="otherTests" label="其他辅助检查" :fields="otherTest" span="9" />
           <a-divider />
-          <a-inline-form name="Samples" label="标本" :fields="samples" span="4" />
+          <a-inline-form name="samples" label="标本" :fields="samples" span="4" />
           <a-divider />
           <a-button type="primary" danger @click="handleCancel">取消</a-button>
-          <a-button type="primary" style="margin-left: 16px" @click="confirmSubmit">提交</a-button>
+          <a-button type="primary" style="margin-left: 16px" @click="confirmSubmit" :disabled="disableSubmit">提交
+          </a-button>
         </a-card>
-        <a-modal v-model:visible="visible" title="确认信息" @ok="handleOk">
+        <a-modal v-model:visible="visible" title="确认信息" @ok="handleSubmit">
           <p>确认后将无法更改，是否确认？</p>
         </a-modal>
       </a-col>
@@ -34,7 +35,7 @@
 </template>
 
 <script>
-import { defineComponent, defineAsyncComponent, toRefs, reactive, ref } from "vue";
+import { defineComponent, defineAsyncComponent, toRefs, reactive, ref, getCurrentInstance } from "vue";
 import { Card, Row, Col, Divider, Button, Modal } from "ant-design-vue";
 import { useStore } from "vuex";
 import { computed } from "@vue/reactivity";
@@ -62,6 +63,11 @@ export default defineComponent({
 
   setup() {
     const store = useStore();
+    const currentInstance = getCurrentInstance();
+    const { $http } = currentInstance.appContext.config.globalProperties;
+    const headers = {
+      Authorization: `Token ${store.getters.getToken}`,
+    }
     const state = reactive({
       patient: computed(() => store.getters.getPatient),
       bloodTest: {
@@ -115,17 +121,42 @@ export default defineComponent({
       }
     });
     const visible = ref(false);
+    const disableSubmit = computed(() => {
+      const completed = store.getters.getComplete;
+      for (let key in completed) {
+        if (completed[key] === false) {
+          return true;
+        }
+      }
+      return false;
+    });
 
     const handleCancel = () => {
       store.dispatch("setPatient", null);
+      store.dispatch('setTests', {});
     };
-
-    //TODO: 提交数据
-    // 提交数据前验证数据
-    // 提交数据的同时，获取患者id，并存入store
 
     const confirmSubmit = () => {
       visible.value = true;
+    };
+
+    const handleSubmit = async () => {
+      const patient = store.getters.getPatient;
+      const tests = store.getters.getTests;
+      try {
+        const res = await $http.post(`/kawasaki/patients/`, patient, { headers });
+        const patientId = res.data.id;
+        Object.keys(tests).forEach(key => {
+          for (let oneTest of tests[key]) {
+            oneTest.patient = patientId;
+            $http.post(`/kawasaki/${key}/`, oneTest, { headers });
+          }
+        });
+        handleCancel();
+        visible.value = false;
+      } catch (error) {
+        console.log(error);
+      }
     };
 
     return {
@@ -133,6 +164,8 @@ export default defineComponent({
       handleCancel,
       confirmSubmit,
       visible,
+      disableSubmit,
+      handleSubmit,
     };
   }
 })

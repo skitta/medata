@@ -14,22 +14,23 @@
               <a-col :span="5" v-if="item.type === 'date'">
                 <a-form-item name="date">
                   <a-date-picker v-model:value="inputData.date" placeholder="选择日期" value-format="YYYY-MM-DD"
-                    style="width: 100%" @change="handleChange"/>
+                    style="width: 100%" @change="handleChange" />
                 </a-form-item>
               </a-col>
               <a-col :span="span" v-else-if="item.type === 'number'">
                 <a-form-item :name="key">
-                  <a-input-number v-model:value="inputData[key]" :placeholder="item.label" @change="handleChange"/>
+                  <a-input-number v-model:value="inputData[key]" :placeholder="item.label" @change="handleChange" />
                 </a-form-item>
               </a-col>
               <a-col :span="span" v-else-if="item.type === 'string'">
                 <a-form-item :name="key">
-                  <a-input v-model:value="inputData[key]" :placeholder="item.label" @change="handleChange"/>
+                  <a-input v-model:value="inputData[key]" :placeholder="item.label" @change="handleChange" />
                 </a-form-item>
               </a-col>
               <a-col :span="span" v-else-if="item.type === 'select'">
                 <a-form-item :name="key">
-                  <a-select v-model:value="inputData[key]" :options="item.options" :placeholder="item.label" @change="handleChange"></a-select>
+                  <a-select v-model:value="inputData[key]" :options="item.options" :placeholder="item.label"
+                    @change="handleChange"></a-select>
                 </a-form-item>
               </a-col>
             </template>
@@ -42,12 +43,12 @@
           </a-row>
           <a-row>
             <a-col>
-              <a-form-item :wrapper-col="{ span: 24, offset: 2 }">
+              <a-form-item :wrapper-col="{ span: 24 }" style="margin-left: 10px">
                 <a-button type="dashed" @click="addDomain">
                   <PlusOutlined /> 添加{{ label }}
                 </a-button>
-                <a-button type="primary" v-if="showSaveButton" style="margin-left: 10px" html-type="submit"
-                  @click="onSubmit">
+                <a-button type="primary" v-if="showSaveButton" style="margin-left: 10px" @click="onSubmit"
+                  :disabled="disableSave">
                   <CheckOutlined /> 保存
                 </a-button>
               </a-form-item>
@@ -60,7 +61,7 @@
 </template>
 
 <script>
-import { defineComponent, reactive, ref, toRaw } from "vue";
+import { defineComponent, reactive, ref, toRaw, watch } from "vue";
 import { Form, DatePicker, Input, InputNumber, Row, Col, Button, Select } from "ant-design-vue";
 import { MinusCircleOutlined, PlusOutlined, CheckOutlined } from '@ant-design/icons-vue';
 import { useStore } from "vuex";
@@ -99,7 +100,7 @@ export default defineComponent({
         wbc: { type: 'number', label: 'WBC' },
         ne: { type: 'percentage', label: 'NE%' },
         label: { type: 'string', label: '标签' },
-        gender: { type: 'select', label: '性别', options: [{value: 'F', label: 'Female'}] },
+        gender: { type: 'select', label: '性别', options: [{ value: 'F', label: 'Female' }] },
         rbc: { type: 'number', label: 'RBC' },
         plt: { type: 'number', label: 'PLT' }
       })
@@ -111,46 +112,73 @@ export default defineComponent({
   },
 
   setup(props) {
+    const store = useStore();
     const formRef = ref();
     const dynamicValidateForm = reactive({
-      datas: [],
+      datas: store.getters.getTestByName(props.name) ?? []
     });
     const showSaveButton = ref(false);
+    const disableSave = ref(true);
+    
+    let storedDataLength = 0;
+    store.dispatch('addComplete', {
+      name: props.name,
+      data: true
+    });
 
-    const store = useStore();
-
+    // 删除表单项事件
     const removeDomain = (inputData) => {
       let index = dynamicValidateForm.datas.indexOf(inputData);
       if (index !== -1) {
         dynamicValidateForm.datas.splice(index, 1);
-        showSaveButton.value = true;
       }
     };
 
+    // 添加表单项事件
     const addDomain = () => {
       let newdata = {}
       for (let key in props.fields) {
         newdata[key] = ''
       }
       dynamicValidateForm.datas.push(newdata);
-      showSaveButton.value = true;
     };
 
+    // 修改表单项事件
     const handleChange = () => {
       showSaveButton.value = true;
     };
 
-    // TODO：验证数据是否合法
-
+    // 提交表单事件
     const onSubmit = () => {
       if (dynamicValidateForm.datas.length === 0) {
-        showSaveButton.value = false;
-        return;
+        store.dispatch('delTest', props.name);
+        storedDataLength = 0;
+      } else {
+        store.dispatch('addTests', { name: props.name, data: toRaw(dynamicValidateForm.datas) });
+        storedDataLength = store.getters.getTestByName(props.name).length;
       }
-      store.dispatch('addTests', { name: props.name, data: toRaw(dynamicValidateForm.datas) });
-      console.log('store', store.getters.getTests);
       showSaveButton.value = false;
     };
+
+    watch([showSaveButton, disableSave], ([showBtnValue, disabled]) => {
+      store.dispatch('addComplete', {
+        name: props.name,
+        data: (showBtnValue === true && disabled === false) ? false : true
+      });
+    });
+
+    watch(dynamicValidateForm.datas, (currentValue) => {
+      showSaveButton.value = (currentValue.length === storedDataLength) ? false : true;
+      currentValue.forEach(item => {
+        for (let key in item) {
+          if (item[key] === '') {
+            disableSave.value = true;
+            return;
+          }
+        }
+        disableSave.value = false;
+      });
+    });
 
     return {
       formRef,
@@ -159,7 +187,8 @@ export default defineComponent({
       removeDomain,
       addDomain,
       handleChange,
-      onSubmit
+      onSubmit,
+      disableSave
     };
   }
 })

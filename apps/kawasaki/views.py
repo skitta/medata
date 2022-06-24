@@ -8,8 +8,8 @@ from rest_framework import filters
 
 # from scripts import zScord
 
-from .models import Patient, Echocardiography, BloodTest, LiverFunction, EnrollGroup
-from .serializers import PatientSerializer, BloodTestSerializer, LiverFunctionSerializer, EchocardiographySerializer, EnrollGroupSerializer
+from .models import Patient, Echocardiography, BloodTest, LiverFunction, EnrollGroup, OtherTest, Samples
+from .serializers import PatientSerializer, BloodTestSerializer, LiverFunctionSerializer, EchocardiographySerializer, EnrollGroupSerializer, OtherTestSerializer, SamplesSerializer
 
 
 class PatientViewSet(viewsets.ModelViewSet):
@@ -32,6 +32,16 @@ class LiverFunctionViewSet(viewsets.ModelViewSet):
 class EchocardiographyViewSet(viewsets.ModelViewSet):
     queryset = Echocardiography.objects.all()
     serializer_class = EchocardiographySerializer
+
+
+class OtherTestViewSet(viewsets.ModelViewSet):
+    queryset = OtherTest.objects.all()
+    serializer_class = OtherTestSerializer
+
+
+class SamplesViewSet(viewsets.ModelViewSet):
+    queryset = Samples.objects.all()
+    serializer_class = SamplesSerializer
 
 
 class EnrollGroupViewSet(viewsets.ModelViewSet):

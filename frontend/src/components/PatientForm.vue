@@ -21,7 +21,7 @@
       <a-input-number v-model:value="formState.age" style="width: 100%" />
     </a-form-item>
     <a-form-item label="入院日期" name="in_date">
-      <a-date-picker v-model:value="formState.in_date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
+      <a-date-picker v-model:value="formState.in_date" value-format="YYYY-MM-DD" style="width: 100%" />
     </a-form-item>
     <a-form-item label="身高(cm)" name="height">
       <a-input-number v-model:value="formState.height" style="width: 100%" />
@@ -31,6 +31,9 @@
     </a-form-item>
     <a-form-item label="分组" v-model:value="formState.group" name="group">
       <a-select v-model:value="formState.group" :options="groupOptions"></a-select>
+    </a-form-item>
+    <a-form-item label="状态" v-model:value="formState.status" name="status">
+      <a-select v-model:value="formState.status" :options="statusOptions"></a-select>
     </a-form-item>
     <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
       <a-button type="primary" @click="showModal">确认</a-button>
@@ -77,9 +80,16 @@ export default defineComponent({
       height: undefined,
       weight: undefined,
       group: "",
+      status: "",
     });
 
     const groupOptions = ref([]);
+
+    const statusOptions = ref([
+      { label: "在院", value: "1" },
+      { label: "随访中", value: "2" },
+      { label: "已完成", value: "3" },
+    ]);
 
     const visible = ref(false);
 
@@ -152,6 +162,7 @@ export default defineComponent({
       height: [{ required: true, validator: checkHeightAndWeight, trigger: "blur" }],
       weight: [{ required: true, validator: checkHeightAndWeight, trigger: "blur" }],
       group: [{ required: true, message: "请选择分组", trigger: "blur" }],
+      status: [{ required: true, message: "请选择状态", trigger: "blur" }],
     };
 
     const showModal = () => {
@@ -179,6 +190,7 @@ export default defineComponent({
       formState,
       rules,
       groupOptions,
+      statusOptions,
       visible,
       showModal,
       handleOk,
