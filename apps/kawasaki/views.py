@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from django.http import Http404
 
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -22,34 +23,53 @@ class PatientViewSet(viewsets.ModelViewSet):
 class BloodTestViewSet(viewsets.ModelViewSet):
     queryset = BloodTest.objects.all()
     serializer_class = BloodTestSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['=patient__id']
 
 
 class LiverFunctionViewSet(viewsets.ModelViewSet):
     queryset = LiverFunction.objects.all()
     serializer_class = LiverFunctionSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['=patient__id']
 
 
 class EchocardiographyViewSet(viewsets.ModelViewSet):
     queryset = Echocardiography.objects.all()
     serializer_class = EchocardiographySerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['=patient__id']
 
 
 class OtherTestViewSet(viewsets.ModelViewSet):
     queryset = OtherTest.objects.all()
     serializer_class = OtherTestSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['=patient__id']
 
 
 class SamplesViewSet(viewsets.ModelViewSet):
     queryset = Samples.objects.all()
     serializer_class = SamplesSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['=patient__id']
 
 
 class EnrollGroupViewSet(viewsets.ModelViewSet):
     queryset = EnrollGroup.objects.all()
     serializer_class = EnrollGroupSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['=patient__id']
 
 
 class PatientSummaryView(APIView):
+    """
+    API: 返回所有病人的一般统计数据
+        sample_count: 病人总数（按groups分类）
+        groups：病人分组数目
+        gender_counts: 性别比例（按groups分类）
+        age_mean: 平均年龄（按groups分类）
+    """
     @staticmethod
     def get(request):
         all_patients = Patient.objects.all()
@@ -111,7 +131,7 @@ class PatientCountByMonthView(APIView):
 
 class PatientAgeByGroupView(APIView):
     """
-    API: 返回患者的年龄信息
+    API: 返回按组分类的各患者年龄
     """
     @staticmethod
     def get(request):
@@ -119,4 +139,35 @@ class PatientAgeByGroupView(APIView):
         context = {}
         for g in groups:
             context[g.name] = [{'value': p.age / 12} for p in Patient.objects.filter(group=g).all()]
+        return Response(context)
+
+
+class GetAllTestsByPatientIDView(APIView):
+    """
+    API: 通过Patient ID 查询其所有检验数据
+    """
+    @staticmethod
+    def get_object(pk):
+        try:
+            return Patient.objects.get(pk=pk)
+        except Patient.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        patient = self.get_object(pk)
+        blood_test = BloodTest.objects.filter(patient=patient).all()
+        liver_function = LiverFunction.objects.filter(patient=patient).all()
+        echocardiography = Echocardiography.objects.filter(patient=patient).all()
+        other_test = OtherTest.objects.filter(patient=patient).all()
+        samples = Samples.objects.filter(patient=patient).all()
+        context = {
+            'bloodTests': [BloodTestSerializer(bt).data for bt in blood_test],
+            'liverFunction': [LiverFunctionSerializer(lf).data for lf in liver_function],
+            'echocardiography': [EchocardiographySerializer(e).data for e in echocardiography],
+            'otherTests': [OtherTestSerializer(ot).data for ot in other_test],
+            'samples': [SamplesSerializer(s).data for s in samples]
+        }
+        for key in list(context.keys()):
+            if not context.get(key):
+                context.pop(key)
         return Response(context)

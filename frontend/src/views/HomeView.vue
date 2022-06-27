@@ -2,13 +2,8 @@
   <a-layout class="layout">
     <a-layout-header>
       <div class="logo" />
-      <a-menu
-        v-model:selectedKeys="selectedKeys"
-        theme="dark"
-        mode="horizontal"
-        :style="{ lineHeight: '64px' }"
-        @select="changeRouter"
-      >
+      <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="horizontal" :style="{ lineHeight: '64px' }"
+        @select="changeRouter">
         <a-menu-item key="dashboard">
           <template #icon>
             <bar-chart-outlined />
@@ -31,7 +26,11 @@
     </a-layout-header>
     <a-layout-content style="padding: 0 50px">
       <div class="layout-content">
-        <router-view></router-view>
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
     </a-layout-content>
     <a-layout-footer style="text-align: center">
@@ -83,7 +82,7 @@ export default defineComponent({
     });
 
     onBeforeRouteUpdate(async (to) => {
-      if(to.name === 'home') {
+      if (to.name === 'home') {
         return false;
       }
     })
@@ -101,7 +100,9 @@ export default defineComponent({
   padding: 24px;
   margin-top: 20px;
   margin-bottom: 20px;
+  min-height: 100vh;
 }
+
 .logo {
   float: left;
   width: 120px;
@@ -109,6 +110,7 @@ export default defineComponent({
   margin: 16px 24px 16px 0;
   background: rgba(255, 255, 255, 0.3);
 }
+
 .ant-row-rtl .logo {
   float: right;
   margin: 16px 0 16px 24px;

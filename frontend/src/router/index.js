@@ -4,7 +4,7 @@ import store from '@/store'
 
 const routes = [
   {
-    path: '/user',
+    path: '/home',
     name: 'home',
     component: () => import('../views/HomeView.vue'),
     children: [

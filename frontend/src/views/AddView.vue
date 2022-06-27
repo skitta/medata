@@ -3,8 +3,17 @@
     <a-row v-if="patient">
       <a-col :span="12" :offset="6">
         <a-card title="患者信息">
+          <template #extra>
+            <a-tag color="pink" v-if="patient.resistance">IVIG 抵抗</a-tag>
+            <a-tag color="red" v-if="patient.relapse">复发</a-tag>
+            <a-button type="link" size="small" @click="onUpdatePatient">
+              <edit-outlined />
+            </a-button>
+          </template>
           <a-patient-detail :patient="patient" />
-          <a-divider />
+        </a-card>
+
+        <a-card title="临床资料">
           <a-inline-form name="bloodTests" label="血常规" :fields="bloodTest" />
           <a-divider />
           <a-inline-form name="liverFunction" label="肝功能" :fields="liverFunction" span="6" />
@@ -15,12 +24,27 @@
           <a-divider />
           <a-inline-form name="samples" label="标本" :fields="samples" span="4" />
           <a-divider />
-          <a-button type="primary" danger @click="handleCancel">取消</a-button>
-          <a-button type="primary" style="margin-left: 16px" @click="confirmSubmit" :disabled="disableSubmit">提交
+          <a-button type="default" @click="handleCancel" :disabled="disableCancel">返回</a-button>
+          <a-button type="primary" style="margin-left: 16px" @click="handleSubmit" :loading="btnLoading"
+            :disabled="disableSubmit">提交
           </a-button>
         </a-card>
-        <a-modal v-model:visible="visible" title="确认信息" @ok="handleSubmit">
-          <p>确认后将无法更改，是否确认？</p>
+
+        <a-modal v-model:visible="updateModalVisible" title="更新患者信息" @ok="handleUpdate">
+          <a-form :model="formState" layout="vertical" name="patientUpdate">
+            <a-form-item label="IVIG 抵抗" v-model:value="formState.resistance" name="resistance">
+              <a-radio-group v-model:value="formState.resistance">
+                <a-radio :value="true">是</a-radio>
+                <a-radio :value="false">否</a-radio>
+              </a-radio-group>
+            </a-form-item>
+            <a-form-item label="复发" v-model:value="formState.relapse" name="relapse">
+              <a-radio-group v-model:value="formState.relapse">
+                <a-radio :value="true">是</a-radio>
+                <a-radio :value="false">否</a-radio>
+              </a-radio-group>
+            </a-form-item>
+          </a-form>
         </a-modal>
       </a-col>
     </a-row>
@@ -35,10 +59,14 @@
 </template>
 
 <script>
-import { defineComponent, defineAsyncComponent, toRefs, reactive, ref, getCurrentInstance } from "vue";
-import { Card, Row, Col, Divider, Button, Modal } from "ant-design-vue";
+import { defineComponent, defineAsyncComponent, toRefs, reactive, ref, getCurrentInstance, toRaw } from "vue";
+import { Card, Row, Col, Divider, Button, Modal, Tag, Form, Radio, message } from "ant-design-vue";
 import { useStore } from "vuex";
 import { computed } from "@vue/reactivity";
+import { EditOutlined } from "@ant-design/icons-vue";
+
+const { Item } = Form;
+const { Group } = Radio;
 
 export default defineComponent({
   name: "AddView",
@@ -50,6 +78,12 @@ export default defineComponent({
     ADivider: Divider,
     AButton: Button,
     AModal: Modal,
+    ATag: Tag,
+    AForm: Form,
+    AFormItem: Item,
+    ARadioGroup: Group,
+    ARadio: Radio,
+    EditOutlined,
     APatientDetail: defineAsyncComponent(() =>
       import("@/components/PatientDetail.vue")
     ),
@@ -120,9 +154,20 @@ export default defineComponent({
         note: { type: 'string', label: '备注' },
       }
     });
-    const visible = ref(false);
+    const formState = reactive({
+      resistance: false,
+      relapse: false,
+    })
+
+    const btnLoading = ref(false);
+    const disableCancel = computed(() => {
+      return btnLoading.value;
+    });
     const disableSubmit = computed(() => {
       const completed = store.getters.getComplete;
+      if (Object.keys(completed).length === 0) {
+        return true;
+      }
       for (let key in completed) {
         if (completed[key] === false) {
           return true;
@@ -130,41 +175,85 @@ export default defineComponent({
       }
       return false;
     });
+    const updateModalVisible = ref(false);
+
+    const onUpdatePatient = () => {
+      formState.resistance = state.patient.resistance;
+      formState.relapse = state.patient.relapse;
+      updateModalVisible.value = true;
+    };
+
+    const handleUpdate = () => {
+      $http.patch(
+        `/kawasaki/patients/${state.patient.id}/`,
+        toRaw(formState),
+        { headers }
+      ).then(res => {
+        updateModalVisible.value = false;
+        store.dispatch("setPatient", res.data);
+      }).catch(err => {
+        message.error(err.response.data.detail);
+      });
+    };
 
     const handleCancel = () => {
       store.dispatch("setPatient", null);
       store.dispatch('setTests', {});
     };
 
-    const confirmSubmit = () => {
-      visible.value = true;
+    const postData = () => {
+      const tests = store.getters.getTests;
+
+      // tests根据id来区分操作：
+      // 1. patient id 为必须字段
+      // 2. test id 由数据库自动生成，据此可以判断是新增还是更新
+      let promiseList = [];
+      for (let key in tests) {
+        for (let [index, oneTest] of tests[key].entries()) {
+          // 如果id为空，则为新增，否则为更新
+          if (oneTest.id !== undefined) {
+            promiseList.push(
+              $http.put(`/kawasaki/${key}/${oneTest.id}/`, oneTest, { headers })
+            );
+          } else {
+            oneTest.patient = state.patient.id;
+            promiseList.push(
+              $http.post(`/kawasaki/${key}/`, oneTest, { headers })
+              .then(res => {
+                tests[key][index] = res.data;
+              })
+            );
+          }
+        }
+      }
+      return Promise.all(promiseList);
     };
 
-    const handleSubmit = async () => {
-      const patient = store.getters.getPatient;
-      const tests = store.getters.getTests;
-      try {
-        const res = await $http.post(`/kawasaki/patients/`, patient, { headers });
-        const patientId = res.data.id;
-        Object.keys(tests).forEach(key => {
-          for (let oneTest of tests[key]) {
-            oneTest.patient = patientId;
-            $http.post(`/kawasaki/${key}/`, oneTest, { headers });
-          }
-        });
-        handleCancel();
-        visible.value = false;
-      } catch (error) {
+    const handleSubmit = () => {
+      btnLoading.value = true;
+      postData().then(() => {
+        btnLoading.value = false;
+        // 将completed重设为初始状态
+        store.dispatch('setComplete', {});
+        message.success('数据提交成功');
+      }).catch(error => {
+        btnLoading.value = false;
+        message.error('数据提交失败');
         console.log(error);
-      }
-    };
+      });
+    }
 
     return {
       ...toRefs(state),
-      handleCancel,
-      confirmSubmit,
-      visible,
+      formState,
+      btnLoading,
+      disableCancel,
       disableSubmit,
+      updateModalVisible,
+
+      onUpdatePatient,
+      handleUpdate,
+      handleCancel,
       handleSubmit,
     };
   }
@@ -173,6 +262,10 @@ export default defineComponent({
 
 <style scoped>
 .ant-row {
+  margin-bottom: 20px;
+}
+
+.ant-card {
   margin-bottom: 20px;
 }
 </style>

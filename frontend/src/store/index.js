@@ -7,7 +7,6 @@ export default createStore({
     groups: [],
     tests: {},
     complete: {},
-    results: {},
   },
 
   getters: {
@@ -17,7 +16,6 @@ export default createStore({
     getTests: state => state.tests,
     getTestByName: state => name => state.tests[name],
     getComplete: state => state.complete,
-    getResults: state => state.results,
   },
 
   mutations: {
@@ -39,12 +37,12 @@ export default createStore({
     delTest(state, name) {
       delete state.tests[name]
     },
+    setComplete(state, complete) {
+      state.complete = complete
+    },
     addComplete(state, complete) {
       state.complete[complete.name] = complete.data
     },
-    setResults(state, results) {
-      state.results = results
-    }
   },
 
   actions: {
@@ -66,11 +64,11 @@ export default createStore({
     delTest({ commit }, name) {
       commit('delTest', name)
     },
+    setComplete({ commit }, complete) {
+      commit('setComplete', complete)
+    },
     addComplete({ commit }, complete) {
       commit('addComplete', complete)
     },
-    setResults({ commit }, results) {
-      commit('setResults', results)
-    }
   },
 })

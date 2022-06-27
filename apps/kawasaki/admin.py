@@ -39,7 +39,7 @@ class EnrollGroupAdmin(admin.ModelAdmin):
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ('registered_ID', 'full_name', 'in_date', 'group', 'status', 'relapse')
+    list_display = ('registered_ID', 'full_name', 'in_date', 'group', 'resistance', 'relapse')
     inlines = [BloodTestInline, LiverFunctionInline, EchocardiographyInline, OtherTestInline, SamplesInline]
 
 

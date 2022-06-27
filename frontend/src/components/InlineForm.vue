@@ -8,7 +8,7 @@
     </a-row>
     <a-row>
       <a-col>
-        <a-form :name="name" layout="inline" :model="dynamicValidateForm" ref="formRef">
+        <a-form :name="name" layout="inline" :model="dynamicValidateForm">
           <a-row v-for="(inputData, index) in dynamicValidateForm.datas" :key="index" class="table-row">
             <template v-for="(item, key) in fields" :key="key">
               <a-col :span="5" v-if="item.type === 'date'">
@@ -35,9 +35,10 @@
               </a-col>
             </template>
             <a-col :span="1">
-              <a-form-item>
-                <MinusCircleOutlined v-if="dynamicValidateForm.datas.length > 0" class="dynamic-delete-button"
-                  :disabled="dynamicValidateForm.datas.length === 0" @click="removeDomain(inputData)" />
+              <a-form-item v-if="dynamicValidateForm.datas.length > 0" style="margin: 0">
+                  <a-button type="link" :disabled="disableDelete(inputData)" @click="removeDomain(inputData)" style="padding: 2px">
+                    <MinusCircleOutlined />
+                  </a-button>
               </a-form-item>
             </a-col>
           </a-row>
@@ -47,8 +48,7 @@
                 <a-button type="dashed" @click="addDomain">
                   <PlusOutlined /> 添加{{ label }}
                 </a-button>
-                <a-button type="primary" v-if="showSaveButton" style="margin-left: 10px" @click="onSubmit"
-                  :disabled="disableSave">
+                <a-button type="primary" v-if="showSaveButton" style="margin-left: 10px" @click="onSave" :disabled="disableSave">
                   <CheckOutlined /> 保存
                 </a-button>
               </a-form-item>
@@ -65,6 +65,7 @@ import { defineComponent, reactive, ref, toRaw, watch } from "vue";
 import { Form, DatePicker, Input, InputNumber, Row, Col, Button, Select } from "ant-design-vue";
 import { MinusCircleOutlined, PlusOutlined, CheckOutlined } from '@ant-design/icons-vue';
 import { useStore } from "vuex";
+import { computed } from "@vue/reactivity";
 
 const { Item } = Form;
 
@@ -113,17 +114,19 @@ export default defineComponent({
 
   setup(props) {
     const store = useStore();
-    const formRef = ref();
     const dynamicValidateForm = reactive({
-      datas: store.getters.getTestByName(props.name) ?? []
+      datas: store.getters.getTestByName(props.name) ?? [],
     });
     const showSaveButton = ref(false);
     const disableSave = ref(true);
-    
-    let storedDataLength = 0;
-    store.dispatch('addComplete', {
-      name: props.name,
-      data: true
+    const disableDelete = computed(() => {
+      return (inputData) => {
+        if (inputData.id !== undefined) {
+          return true;
+        } else {
+          return false;
+        }
+      };
     });
 
     // 删除表单项事件
@@ -149,7 +152,12 @@ export default defineComponent({
     };
 
     // 提交表单事件
-    const onSubmit = () => {
+    let storedDataLength = 0;
+    const onSave = () => {
+      // 逻辑事件：
+      // 对于一个空 datas，完成了一次表单填写，并点击了保存按钮 => store 保存了键值对数据
+      // 然后删除了该表单，并点击了保存按钮 => store 将保存空键值对数据
+      // 以下条件判断将删除该空键值对数据
       if (dynamicValidateForm.datas.length === 0) {
         store.dispatch('delTest', props.name);
         storedDataLength = 0;
@@ -160,13 +168,15 @@ export default defineComponent({
       showSaveButton.value = false;
     };
 
+    // 监听所有表单是否完成，以控制完成状态
     watch([showSaveButton, disableSave], ([showBtnValue, disabled]) => {
       store.dispatch('addComplete', {
         name: props.name,
-        data: (showBtnValue === true && disabled === false) ? false : true
+        data: (showBtnValue === false && disabled === false) ? true : false
       });
     });
 
+    // 监听表单数据是否完整，以控制保存按钮的启用状态
     watch(dynamicValidateForm.datas, (currentValue) => {
       showSaveButton.value = (currentValue.length === storedDataLength) ? false : true;
       currentValue.forEach(item => {
@@ -181,14 +191,14 @@ export default defineComponent({
     });
 
     return {
-      formRef,
       dynamicValidateForm,
       showSaveButton,
       removeDomain,
       addDomain,
       handleChange,
-      onSubmit,
-      disableSave
+      onSave,
+      disableSave,
+      disableDelete
     };
   }
 })

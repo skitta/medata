@@ -13,8 +13,8 @@ class EnrollGroup(models.Model):
 
 
 class Patient(models.Model):
-    registered_ID = models.CharField(max_length=8, unique=True, verbose_name='登记号')
-    document_ID = models.CharField(max_length=7, null=True, verbose_name='住院号')
+    registered_ID = models.CharField(max_length=10, unique=True, verbose_name='登记号')
+    document_ID = models.CharField(max_length=10, null=True, verbose_name='住院号')
     full_name = models.CharField(max_length=20, verbose_name='姓名')
     GENDER_CHOICES = (
         ('M', 'Male'),
@@ -26,13 +26,8 @@ class Patient(models.Model):
     weight = models.FloatField(verbose_name='体重（Kg）')
     height = models.FloatField(verbose_name='身高（cm）')
     group = models.ForeignKey(EnrollGroup, on_delete=models.CASCADE, verbose_name='分组')
-    STATUS_CHOICES = (
-        ('1', '在院'),
-        ('2', '随访中'),
-        ('3', '已完成')
-    )
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES, verbose_name='状态')
-    relapse = models.BooleanField(verbose_name='复发', default=False, editable=False)
+    resistance = models.BooleanField(verbose_name='IVIG 抵抗', default=False)
+    relapse = models.BooleanField(verbose_name='复发', default=False)
     
     def __str__(self):
         return "{name}({id})".format(name=self.full_name, id=self.registered_ID)
