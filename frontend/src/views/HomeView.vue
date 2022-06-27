@@ -20,7 +20,7 @@
           <template #icon>
             <user-outlined />
           </template>
-          后台
+          管理
         </a-menu-item>
       </a-menu>
     </a-layout-header>

@@ -1,5 +1,4 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import LoginView from '../views/LoginView.vue'
 import store from '@/store'
 
 const routes = [
@@ -11,19 +10,24 @@ const routes = [
       {
         path: 'dashboard',
         name: 'dashboard',
-        component: () => import('../views/DashboardView.vue'),
+        component: () => import('../views/home/DashboardView.vue'),
       },
       {
         path: 'add',
         name: 'add',
-        component: () => import('../views/AddView.vue'),
+        component: () => import('../views/home/AddView.vue'),
+      },
+      {
+        path: 'manager',
+        name: 'manager',
+        component: () => import('../views/home/ManagerView.vue'),
       }
     ]
   },
   {
     path: '/',
     name: 'login',
-    component: LoginView,
+    component: () => import('../views/LoginView.vue'),
   }
 ]
 

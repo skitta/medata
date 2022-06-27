@@ -1,69 +1,73 @@
 <template>
-  <div class="add-form">
-    <a-row v-if="patient">
-      <a-col :span="12" :offset="6">
-        <a-card title="患者信息">
-          <template #extra>
-            <a-tag color="pink" v-if="patient.resistance">IVIG 抵抗</a-tag>
-            <a-tag color="red" v-if="patient.relapse">复发</a-tag>
-            <a-button type="link" size="small" @click="onUpdatePatient">
-              <edit-outlined />
+  <div>
+    <transition name="fade" mode="out-in">
+      <a-row v-if="!patient">
+        <a-col :span="12" :offset="6">
+          <a-card title="添加新患者">
+            <a-patient-form />
+          </a-card>
+        </a-col>
+      </a-row>
+
+      <a-row v-else>
+        <a-col :span="12" :offset="6">
+          <a-card title="患者信息">
+            <template #extra>
+              <a-tag color="pink" v-if="patient.resistance">IVIG 抵抗</a-tag>
+              <a-tag color="red" v-if="patient.relapse">复发</a-tag>
+              <a-button type="link" size="small" @click="onUpdatePatient">
+                <edit-outlined />
+              </a-button>
+            </template>
+            <a-patient-detail :patient="patient" />
+          </a-card>
+
+          <a-card title="临床资料">
+            <a-inline-form name="bloodTests" label="血常规" :fields="bloodTest" />
+            <a-divider />
+            <a-inline-form name="liverFunction" label="肝功能" :fields="liverFunction" span="6" />
+            <a-divider />
+            <a-inline-form name="echocardiography" label="心脏彩超" :fields="echocardiography" span="4" />
+            <a-divider />
+            <a-inline-form name="otherTests" label="其他辅助检查" :fields="otherTest" span="9" />
+            <a-divider />
+            <a-inline-form name="samples" label="标本" :fields="samples" span="4" />
+            <a-divider />
+            <a-button type="default" @click="handleCancel" :disabled="disableCancel">返回</a-button>
+            <a-button type="primary" style="margin-left: 16px" @click="handleSubmit" :loading="btnLoading"
+              :disabled="disableSubmit">提交
             </a-button>
-          </template>
-          <a-patient-detail :patient="patient" />
-        </a-card>
+          </a-card>
+        </a-col>
+      </a-row>
+    </transition>
 
-        <a-card title="临床资料">
-          <a-inline-form name="bloodTests" label="血常规" :fields="bloodTest" />
-          <a-divider />
-          <a-inline-form name="liverFunction" label="肝功能" :fields="liverFunction" span="6" />
-          <a-divider />
-          <a-inline-form name="echocardiography" label="心脏彩超" :fields="echocardiography" span="4" />
-          <a-divider />
-          <a-inline-form name="otherTests" label="其他辅助检查" :fields="otherTest" span="9" />
-          <a-divider />
-          <a-inline-form name="samples" label="标本" :fields="samples" span="4" />
-          <a-divider />
-          <a-button type="default" @click="handleCancel" :disabled="disableCancel">返回</a-button>
-          <a-button type="primary" style="margin-left: 16px" @click="handleSubmit" :loading="btnLoading"
-            :disabled="disableSubmit">提交
-          </a-button>
-        </a-card>
-
-        <a-modal v-model:visible="updateModalVisible" title="更新患者信息" @ok="handleUpdate">
-          <a-form :model="formState" layout="vertical" name="patientUpdate">
-            <a-form-item label="IVIG 抵抗" v-model:value="formState.resistance" name="resistance">
-              <a-radio-group v-model:value="formState.resistance">
-                <a-radio :value="true">是</a-radio>
-                <a-radio :value="false">否</a-radio>
-              </a-radio-group>
-            </a-form-item>
-            <a-form-item label="复发" v-model:value="formState.relapse" name="relapse">
-              <a-radio-group v-model:value="formState.relapse">
-                <a-radio :value="true">是</a-radio>
-                <a-radio :value="false">否</a-radio>
-              </a-radio-group>
-            </a-form-item>
-          </a-form>
-        </a-modal>
-      </a-col>
-    </a-row>
-    <a-row v-if="!patient">
-      <a-col :span="12" :offset="6">
-        <a-card title="添加新患者">
-          <a-patient-form />
-        </a-card>
-      </a-col>
-    </a-row>
+    <a-modal v-model:visible="updateModalVisible" title="更新患者信息" @ok="handleUpdate">
+      <a-form :model="formState" layout="vertical" name="patientUpdate">
+        <a-form-item label="IVIG 抵抗" v-model:value="formState.resistance" name="resistance">
+          <a-radio-group v-model:value="formState.resistance">
+            <a-radio :value="true">是</a-radio>
+            <a-radio :value="false">否</a-radio>
+          </a-radio-group>
+        </a-form-item>
+        <a-form-item label="复发" v-model:value="formState.relapse" name="relapse">
+          <a-radio-group v-model:value="formState.relapse">
+            <a-radio :value="true">是</a-radio>
+            <a-radio :value="false">否</a-radio>
+          </a-radio-group>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script>
-import { defineComponent, defineAsyncComponent, toRefs, reactive, ref, getCurrentInstance, toRaw } from "vue";
+import { defineComponent, defineAsyncComponent, toRefs, reactive, ref, toRaw } from "vue";
 import { Card, Row, Col, Divider, Button, Modal, Tag, Form, Radio, message } from "ant-design-vue";
 import { useStore } from "vuex";
 import { computed } from "@vue/reactivity";
 import { EditOutlined } from "@ant-design/icons-vue";
+import { updatePatient, updateTestByName, addTestByName } from "@/api/kawasaki";
 
 const { Item } = Form;
 const { Group } = Radio;
@@ -97,11 +101,6 @@ export default defineComponent({
 
   setup() {
     const store = useStore();
-    const currentInstance = getCurrentInstance();
-    const { $http } = currentInstance.appContext.config.globalProperties;
-    const headers = {
-      Authorization: `Token ${store.getters.getToken}`,
-    }
     const state = reactive({
       patient: computed(() => store.getters.getPatient),
       bloodTest: {
@@ -184,21 +183,18 @@ export default defineComponent({
     };
 
     const handleUpdate = () => {
-      $http.patch(
-        `/kawasaki/patients/${state.patient.id}/`,
-        toRaw(formState),
-        { headers }
-      ).then(res => {
+      updatePatient(state.patient.id, toRaw(formState)).then(data => {
         updateModalVisible.value = false;
-        store.dispatch("setPatient", res.data);
+        store.dispatch("setPatient", data);
       }).catch(err => {
-        message.error(err.response.data.detail);
+        message.error(err);
       });
     };
 
     const handleCancel = () => {
       store.dispatch("setPatient", null);
       store.dispatch('setTests', {});
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const postData = () => {
@@ -213,15 +209,15 @@ export default defineComponent({
           // 如果id为空，则为新增，否则为更新
           if (oneTest.id !== undefined) {
             promiseList.push(
-              $http.put(`/kawasaki/${key}/${oneTest.id}/`, oneTest, { headers })
+              updateTestByName(key, oneTest.id, oneTest)
             );
           } else {
             oneTest.patient = state.patient.id;
             promiseList.push(
-              $http.post(`/kawasaki/${key}/`, oneTest, { headers })
-              .then(res => {
-                tests[key][index] = res.data;
-              })
+              addTestByName(key, oneTest)
+                .then(data => {
+                  tests[key][index] = data;
+                })
             );
           }
         }

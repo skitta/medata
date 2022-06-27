@@ -79,14 +79,13 @@
 <script>
 import {
   defineComponent,
-  getCurrentInstance,
   onMounted,
   reactive,
   toRefs,
 } from "vue";
 import { Line, Histogram } from "@antv/g2plot";
 import { Row, Col, Card, Statistic } from "ant-design-vue";
-import { useStore } from "vuex";
+import { getSummary, getCountByMonth, getAgeByGroup } from "@/api/kawasaki";
 
 export default defineComponent({
   name: "DashboardView",
@@ -97,13 +96,6 @@ export default defineComponent({
     AStatistic: Statistic,
   },
   setup() {
-    const currentInstance = getCurrentInstance();
-    const { $http } = currentInstance.appContext.config.globalProperties;
-    const store = useStore();
-    const headers = {
-      Authorization: `Token ${store.getters.getToken}`,
-    }
-
     const state = reactive({
       sampleCounts: {},
       groups: [],
@@ -112,8 +104,7 @@ export default defineComponent({
     });
 
     const getData = async () => {
-      const res = await $http.get("/kawasaki/summary/", { headers });
-      const { data } = res;
+      const data = await getSummary();
       state.sampleCounts = data.sample_counts;
       state.groups = data.groups;
       state.genderCounts = data.gender_counts;
@@ -121,8 +112,7 @@ export default defineComponent({
     };
 
     const setLinePlot = async () => {
-      const res = await $http.get("/kawasaki/count-by-month/", { headers });
-      const { data } = res;
+      const data = await getCountByMonth();
       if (data != null && data.length != 0) {
         const line = new Line("count_line", {
           data: data,
@@ -143,8 +133,7 @@ export default defineComponent({
     };
 
     const setHistPlot = async () => {
-      const res = await $http.get("/kawasaki/age-by-group/", { headers });
-      const { data } = res;
+      const data = await getAgeByGroup();
       for (const [key, value] of Object.entries(data)) {
         if (value != null && value.length != 0) {
           const hist_id = `age_hist_${key.replaceAll(" ", "_")}`;

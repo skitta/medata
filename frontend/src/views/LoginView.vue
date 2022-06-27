@@ -43,20 +43,18 @@
 
 <script>
 import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
-import { defineComponent, reactive, getCurrentInstance } from "vue";
+import { defineComponent, reactive } from "vue";
 import { Form, Input, Button, Card, Select, Alert } from "ant-design-vue";
 import { ParticlesBg } from "particles-bg-vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
+import { getToken } from "@/api/login";
 
 const { Item } = Form;
 const { Password } = Input;
 
 export default defineComponent({
   setup() {
-    const currentInstance = getCurrentInstance();
-    const { $http } = currentInstance.appContext.config.globalProperties;
-    
     const store = useStore();
     store.dispatch('setToken', null);
 
@@ -82,23 +80,10 @@ export default defineComponent({
 
     const handleSubmit = () => {
       const { user, password } = formState;
-      var formData = require("form-data");
-      var data = new formData();
-      data.append("username", user);
-      data.append("password", password);
 
-      var config = {
-        method: 'post',
-        url: '/token-auth/',
-        headers: {
-          ...data.getHeaders,
-        },
-        data: data,
-      };
-
-      $http(config)
-        .then(res => {
-          store.commit("setToken", res.data.token);
+      getToken(user, password)
+        .then(token => {
+          store.commit("setToken", token);
         })
         .then(() => {
           router.push({ name: "home" });

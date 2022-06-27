@@ -55,11 +55,13 @@
 </template>
 
 <script>
-import { defineComponent, ref, reactive, getCurrentInstance, onMounted, toRaw } from "vue";
+import { defineComponent, ref, reactive, toRaw } from "vue";
 import {
   Form, Input, Select, DatePicker, InputNumber, Button, Modal, Radio, message
 } from "ant-design-vue";
 import { useStore } from "vuex";
+import { getGroups, searchPatient, getTestsByPatientId, addPatient } from "@/api/kawasaki";
+import { computed } from "@vue/reactivity";
 
 const { Item } = Form;
 const { Option } = Select;
@@ -96,31 +98,13 @@ export default defineComponent({
       resistance: false,
       relapse: false
     });
-    const groupOptions = ref([]);
+    const groupOptions = computed(() => getGroups());
 
     const modalVisible = ref(false);
     const modalMsg = ref("");
     const confireLoading = ref(false);
 
-    const currentInstance = getCurrentInstance();
-    const { $http } = currentInstance.appContext.config.globalProperties;
     const store = useStore();
-    const headers = {
-      Authorization: `Token ${store.getters.getToken}`,
-    }
-
-    const getGroups = async () => {
-      try {
-        const response = await $http.get("/kawasaki/enrollGroups/", { headers });
-        groupOptions.value = response.data.results.map(group => ({
-          value: group.id,
-          label: group.name,
-        }));
-        store.dispatch("setGroups", groupOptions.value);
-      } catch (error) {
-        console.log(error);
-      }
-    }
 
     let checkAge = async (rule, value) => {
       if (!value) {
@@ -153,9 +137,9 @@ export default defineComponent({
       }
 
       try {
-        const response = await $http.get(`/kawasaki/patients?search=${value}`, { headers });
-        if (response.data.count > 0) {
-          existPatient = response.data.results[0];
+        const data = await searchPatient(value);
+        if (data.count > 0) {
+          existPatient = data.results[0];
           modalMsg.value = "登记号已存在，是否直接加载？";
           modalVisible.value = true;
           return Promise.reject("登记号已存在");
@@ -200,11 +184,9 @@ export default defineComponent({
       confireLoading.value = true;
       if (Object.keys(existPatient).length > 0) {
         // 如果数据库中存在该患者，则获取该患者的所有临床数据
-        $http.get(
-          `/kawasaki/all-tests-by-patient/${existPatient.id}/`,
-          { headers }
-        ).then(response => {
-          store.dispatch("setTests", response.data);
+        getTestsByPatientId(existPatient.id)
+        .then(data => {
+          store.dispatch("setTests", data);
           store.dispatch("setPatient", existPatient);
           confireLoading.value = false;
           modalVisible.value = false;
@@ -216,12 +198,9 @@ export default defineComponent({
         });
       } else {
         // 否则提交新患者至数据库
-        $http.post(
-          "/kawasaki/patients/",
-          toRaw(formState),
-          { headers }
-        ).then(response => {
-          store.dispatch("setPatient", response.data);
+        addPatient(toRaw(formState))
+        .then(data => {
+          store.dispatch("setPatient", data);
           confireLoading.value = false;
           modalVisible.value = false;
         }).catch(error => {
@@ -232,10 +211,6 @@ export default defineComponent({
         });
       }
     }
-
-    onMounted(async () => {
-      await getGroups();
-    });
 
     return {
       formRef,
