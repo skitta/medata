@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="dashboard">
     <a-row :gutter="16">
       <a-col :span="8">
         <a-card>
@@ -183,6 +183,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.dashboard {
+  padding: 24px;
+  margin: 20px 40px;
+}
+
 .plot {
   margin-top: 20px;
 }

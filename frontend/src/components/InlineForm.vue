@@ -212,8 +212,8 @@ export default defineComponent({
 }
 
 .title {
-  font-size: 14px;
-  font-weight: bold;
+  /* font-size: 14px; */
+  /* font-weight: bold; */
   background-color: #fafafa;
 }
 

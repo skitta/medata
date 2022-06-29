@@ -1,8 +1,9 @@
 <template>
+<div class="manager">
   <a-space direction="vertical" style="width: 100%">
     <a-row>
       <a-col :span="4">
-        <a-input placeholder="搜索" @press-enter="onSearch">
+        <a-input placeholder="搜索" :allow-clear="true" @press-enter="onSearch" @change="onSearch">
           <template #prefix>
             <search-outlined style="color: rgba(0,0,0,.5)" />
           </template>
@@ -14,30 +15,37 @@
       <a-col :span="24">
         <a-table :columns="columns" :data-source="dataSource" :pagination="pagination" :loading="loading"
           @change="handleTableChange" :bordered="true">
-          <template #bodyCell="{ column, text }">
-            <span v-if="column.dataIndex === 'tags'">
-              <a-tag v-for="tag in text" :key="tag" :color="tag === 'IVIG抵抗' ? 'pink' : tag === '复发' ? 'red' : 'blue'">
-                {{ tag }}
-              </a-tag>
-            </span>
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'registered_ID'">
+              <a-button type="link" @click="gotoAdd">{{ record.registered_ID }}</a-button>
+            </template>
+            <template v-if="column.key === 'tags'">
+              <span>
+                <a-tag v-for="tag in record.tags" :key="tag"
+                  :color="tag === 'IVIG抵抗' ? 'pink' : tag === '复发' ? 'red' : 'blue'">
+                  {{ tag }}
+                </a-tag>
+              </span>
+            </template>
           </template>
         </a-table>
       </a-col>
     </a-row>
   </a-space>
-
+</div>
 </template>
 
 <script>
-import { defineComponent } from "vue";
-import { Table, Tag, Input, Row, Col, Space } from "ant-design-vue";
+import { defineComponent, ref, watch } from "vue";
+import { Table, Tag, Input, Row, Col, Space, Button } from "ant-design-vue";
 import { usePagination } from 'vue-request'
 import { computed } from "@vue/reactivity";
-import { getGroups, getPatients } from "@/api/kawasaki";
+import { getGroups, getPatients, getTestsByPatientId } from "@/api/kawasaki";
 import { SearchOutlined } from "@ant-design/icons-vue";
+import { useRouter } from "vue-router";
+import { useStore } from "vuex";
 
 const groupList = getGroups();
-
 const columns = [
   {
     title: "登记号",
@@ -81,6 +89,7 @@ export default defineComponent({
     ATag: Tag,
     AInput: Input,
     ASpace: Space,
+    AButton: Button,
     SearchOutlined,
   },
 
@@ -120,6 +129,8 @@ export default defineComponent({
       });
     });
 
+    const apiParams = ref({});
+
     const handleTableChange = (pagination, filters, sorter) => {
       const sortField = () => {
         if (sorter.order === "ascend") {
@@ -129,27 +140,42 @@ export default defineComponent({
         } else {
           return null;
         }
-      }
+      };
 
-      const { group, tags } = filters
+      const { group, tags } = filters;
+      const tagsFilter = {};
+      tags?.forEach(key => tagsFilter[key] = true);
 
-      const tagsFilter = {}
-      tags?.forEach(key => tagsFilter[key] = true)
-
-      run({
-        page: pagination?.current,
-        ordering: sortField(),
-        group__in: group?.toString(),
-        ...tagsFilter,
-      });
+      apiParams.value.page = pagination?.current;
+      apiParams.value.ordering = sortField();
+      apiParams.value.group__in = group;
+      apiParams.value = { ...apiParams.value, ...tagsFilter };
     };
 
     const onSearch = (e) => {
-      run({
-        page: 1,
-        search: e.target.value,
-      });
+      apiParams.value.search = e.target.value;
     }
+
+    const store = useStore();
+    const router = useRouter();
+    const gotoAdd = async (e) => {
+      try {
+        const data = await getPatients({ search: e.target.textContent });
+        const patient = data.results[0];
+        store.dispatch("setPatient", patient);
+        const tests = await getTestsByPatientId(patient.id);
+        store.dispatch("setTests", tests);
+        router.push({ name: "add-tests" });
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    watch(() => apiParams, (params) => {
+      run(params.value);
+    }, {
+      deep: true,
+    });
 
     return {
       columns,
@@ -158,10 +184,15 @@ export default defineComponent({
       loading,
       handleTableChange,
       onSearch,
+      gotoAdd,
     };
   }
 })
 </script>
 
 <style scoped>
+.manager {
+  padding: 24px;
+  margin: 20px 40px;
+}
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <a-descriptions>
+  <a-descriptions :bordered="true">
     <a-descriptions-item label="登记号">{{ patient.registered_ID }}</a-descriptions-item>
     <a-descriptions-item label="住院号">{{ patient.document_ID }}</a-descriptions-item>
     <a-descriptions-item label="姓名">{{ patient.full_name }}</a-descriptions-item>

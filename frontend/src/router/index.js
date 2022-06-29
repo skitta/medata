@@ -3,6 +3,11 @@ import store from '@/store'
 
 const routes = [
   {
+    path: '/',
+    name: 'login',
+    component: () => import('../views/LoginView.vue'),
+  },
+  {
     path: '/home',
     name: 'home',
     component: () => import('../views/HomeView.vue'),
@@ -16,6 +21,18 @@ const routes = [
         path: 'add',
         name: 'add',
         component: () => import('../views/home/AddView.vue'),
+        children: [
+          {
+            path: 'patient',
+            name: 'add-patient',
+            component: () => import('../views/home/add/AddPatientView.vue'),
+          },
+          {
+            path: 'tests',
+            name: 'add-tests',
+            component: () => import('../views/home/add/AddTestsView.vue'),
+          },
+        ],
       },
       {
         path: 'manager',
@@ -24,11 +41,6 @@ const routes = [
       }
     ]
   },
-  {
-    path: '/',
-    name: 'login',
-    component: () => import('../views/LoginView.vue'),
-  }
 ]
 
 const router = createRouter({

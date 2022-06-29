@@ -1,5 +1,5 @@
 <template>
-  <a-layout class="layout">
+  <a-layout>
     <a-layout-header>
       <div class="logo" />
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="horizontal" :style="{ lineHeight: '64px' }"
@@ -10,7 +10,7 @@
           </template>
           总览
         </a-menu-item>
-        <a-menu-item key="add">
+        <a-menu-item key="add-patient">
           <template #icon>
             <plus-square-outlined />
           </template>
@@ -24,14 +24,12 @@
         </a-menu-item>
       </a-menu>
     </a-layout-header>
-    <a-layout-content style="padding: 0 50px">
-      <div class="layout-content">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
-      </div>
+    <a-layout-content>
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </a-layout-content>
     <a-layout-footer style="text-align: center">
       copyright@2022 by Chen Tao
@@ -96,12 +94,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.layout-content {
-  padding: 24px;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
 .ant-layout-content {
   /* ant-layout-header: 64px, ant-layout-footer: 70px */
   min-height: calc(100vh - 134px)
