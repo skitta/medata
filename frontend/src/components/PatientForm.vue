@@ -60,7 +60,7 @@ import {
   Form, Input, Select, DatePicker, InputNumber, Button, Modal, Radio, message
 } from "ant-design-vue";
 import { useStore } from "vuex";
-import { getGroups, searchPatient, getTestsByPatientId, addPatient } from "@/api/kawasaki";
+import { getGroups, getPatients, getTestsByPatientId, addPatient } from "@/api/kawasaki";
 import { computed } from "@vue/reactivity";
 
 const { Item } = Form;
@@ -137,7 +137,7 @@ export default defineComponent({
       }
 
       try {
-        const data = await searchPatient(value);
+        const data = await getPatients({ search: value });
         if (data.count > 0) {
           existPatient = data.results[0];
           modalMsg.value = "登记号已存在，是否直接加载？";

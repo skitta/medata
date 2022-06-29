@@ -44,27 +44,12 @@ function addPatient(data) {
   });
 }
 
-function getPatients(pagination) {
+function getPatients(params) {
   return new Promise((resolve, reject) => {
     axios.get(
       "patients/",
       {
-        params: { page: pagination.current }
-      }
-    ).then(response => {
-      resolve(response.data);
-    }).catch(error => {
-      reject(error.data);
-    });
-  });
-}
-
-function searchPatient(search) {
-  return new Promise((resolve, reject) => {
-    axios.get(
-      "patients/",
-      {
-        params: { search: search }
+        params: params
       }
     ).then(response => {
       resolve(response.data);
@@ -148,7 +133,6 @@ export {
   getGroups,
   addPatient,
   getPatients,
-  searchPatient,
   updatePatient,
   addTestByName,
   getTestsByPatientId,

@@ -6,6 +6,7 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
 
 # from scripts import zScord
 
@@ -16,8 +17,13 @@ from .serializers import PatientSerializer, BloodTestSerializer, LiverFunctionSe
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all().order_by('id')
     serializer_class = PatientSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['=registered_ID']
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    search_fields = ['=registered_ID', 'full_name']
+    filterset_fields = {
+        'group': ['exact', 'in'],
+        'resistance': ['exact'],
+        'relapse': ['exact']
+    }
 
 
 class BloodTestViewSet(viewsets.ModelViewSet):

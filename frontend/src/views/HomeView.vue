@@ -100,7 +100,11 @@ export default defineComponent({
   padding: 24px;
   margin-top: 20px;
   margin-bottom: 20px;
-  min-height: 100vh;
+}
+
+.ant-layout-content {
+  /* ant-layout-header: 64px, ant-layout-footer: 70px */
+  min-height: calc(100vh - 134px)
 }
 
 .logo {

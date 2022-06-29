@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'apps.kawasaki.apps.KawasakiConfig',
     'rest_framework',
     'rest_framework.authtoken',
-    'corsheaders'
+    'corsheaders',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
