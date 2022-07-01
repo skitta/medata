@@ -1,42 +1,42 @@
 <template>
-<div class="manager">
-  <a-space direction="vertical" style="width: 100%">
-    <a-row>
-      <a-col :span="4">
-        <a-input placeholder="搜索" :allow-clear="true" @press-enter="onSearch" @change="onSearch">
-          <template #prefix>
-            <search-outlined style="color: rgba(0,0,0,.5)" />
-          </template>
-        </a-input>
-      </a-col>
-    </a-row>
+  <div class="manager">
+    <a-space direction="vertical" style="width: 100%">
+      <a-row>
+        <a-col :span="4">
+          <a-input placeholder="搜索" :allow-clear="true" @press-enter="onSearch" @change="onSearch">
+            <template #prefix>
+              <search-outlined style="color: rgba(0,0,0,.5)" />
+            </template>
+          </a-input>
+        </a-col>
+      </a-row>
 
-    <a-row>
-      <a-col :span="24">
-        <a-table :columns="columns" :data-source="dataSource" :pagination="pagination" :loading="loading"
-          @change="handleTableChange" :bordered="true">
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'registered_ID'">
-              <a-button type="link" @click="gotoAdd">{{ record.registered_ID }}</a-button>
+      <a-row>
+        <a-col :span="24">
+          <a-table :columns="columns" :data-source="dataSource" :pagination="pagination" :loading="loading"
+            @change="handleTableChange" :bordered="true">
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'registered_ID'">
+                <a-button type="link" @click="gotoAdd">{{ record.registered_ID }}</a-button>
+              </template>
+              <template v-if="column.key === 'tags'">
+                <span>
+                  <a-tag v-for="tag in record.tags" :key="tag"
+                    :color="tag === 'IVIG抵抗' ? 'pink' : tag === '复发' ? 'red' : 'blue'">
+                    {{ tag }}
+                  </a-tag>
+                </span>
+              </template>
             </template>
-            <template v-if="column.key === 'tags'">
-              <span>
-                <a-tag v-for="tag in record.tags" :key="tag"
-                  :color="tag === 'IVIG抵抗' ? 'pink' : tag === '复发' ? 'red' : 'blue'">
-                  {{ tag }}
-                </a-tag>
-              </span>
-            </template>
-          </template>
-        </a-table>
-      </a-col>
-    </a-row>
-  </a-space>
-</div>
+          </a-table>
+        </a-col>
+      </a-row>
+    </a-space>
+  </div>
 </template>
 
 <script>
-import { defineComponent, ref, watch } from "vue";
+import { defineComponent, onMounted, ref, watch } from "vue";
 import { Table, Tag, Input, Row, Col, Space, Button } from "ant-design-vue";
 import { usePagination } from 'vue-request'
 import { computed } from "@vue/reactivity";
@@ -44,42 +44,6 @@ import { getGroups, getPatients, getTestsByPatientId } from "@/api/kawasaki";
 import { SearchOutlined } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
-
-const groupList = getGroups();
-const columns = [
-  {
-    title: "登记号",
-    dataIndex: "registered_ID",
-    key: "registered_ID",
-  },
-  {
-    title: "姓名",
-    dataIndex: "full_name",
-    key: "full_name",
-  },
-  {
-    title: "入院日期",
-    dataIndex: "in_date",
-    key: "in_date",
-    sorter: true,
-    width: '20%'
-  },
-  {
-    title: "分组",
-    dataIndex: "group",
-    key: "group",
-    filters: groupList.map(group => ({ text: group.label, value: group.value })),
-  },
-  {
-    title: "标签",
-    dataIndex: "tags",
-    key: "tags",
-    filters: [
-      { text: "IVIG抵抗", value: "resistance" },
-      { text: "复发", value: "relapse" },
-    ],
-  }
-]
 
 export default defineComponent({
   components: {
@@ -94,6 +58,46 @@ export default defineComponent({
   },
 
   setup() {
+    let groupList = [];
+    onMounted(() => {
+      getGroups().then(data => {
+        groupList = data;
+      });
+    });
+    const columns = [
+      {
+        title: "登记号",
+        dataIndex: "registered_ID",
+        key: "registered_ID",
+      },
+      {
+        title: "姓名",
+        dataIndex: "full_name",
+        key: "full_name",
+      },
+      {
+        title: "入院日期",
+        dataIndex: "in_date",
+        key: "in_date",
+        sorter: true,
+        width: '20%'
+      },
+      {
+        title: "分组",
+        dataIndex: "group",
+        key: "group",
+        filters: groupList.map(group => ({ text: group.label, value: group.value })),
+      },
+      {
+        title: "标签",
+        dataIndex: "tags",
+        key: "tags",
+        filters: [
+          { text: "IVIG抵抗", value: "resistance" },
+          { text: "复发", value: "relapse" },
+        ],
+      }
+    ]
     const { data, run, loading, current, pageSize } = usePagination(getPatients, {
       pagination: {
         currentKey: "page",

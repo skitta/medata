@@ -16,22 +16,24 @@ axios.interceptors.request.use(
 );
 
 function getGroups() {
-  let groupList = store.getters.getGroups;
-  if (groupList.length !== 0) {
-    return groupList;
-  } else {
-    axios.get("enrollGroups/").then(response => {
-      groupList = response.data.results.map(group => ({
-        value: group.id,
-        label: group.name,
-      }));
-      store.dispatch("setGroups", groupList);
-      return groupList;
-    }).catch(error => {
-      console.log(error);
-      return [];
-    });
-  }
+  return new Promise((resolve, reject) => {
+    let groupList = store.getters.getGroups;
+    if (groupList.length !== 0) {
+      resolve(groupList);
+    } else {
+      axios.get("enrollGroups/").then(response => {
+        groupList = response.data.results.map(group => ({
+          value: group.id,
+          label: group.name,
+        }));
+        store.dispatch("setGroups", groupList);
+        resolve(groupList);
+      }).catch(error => {
+        reject(error.data);
+      });
+    }
+  });
+
 }
 
 function addPatient(data) {

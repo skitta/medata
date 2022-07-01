@@ -36,9 +36,10 @@
             </template>
             <a-col :span="1">
               <a-form-item v-if="dynamicValidateForm.datas.length > 0" style="margin: 0">
-                  <a-button type="link" :disabled="disableDelete(inputData)" @click="removeDomain(inputData)" style="padding: 2px">
-                    <MinusCircleOutlined />
-                  </a-button>
+                <a-button type="link" :disabled="disableDelete(inputData)" @click="removeDomain(inputData)"
+                  style="padding: 2px">
+                  <MinusCircleOutlined />
+                </a-button>
               </a-form-item>
             </a-col>
           </a-row>
@@ -48,7 +49,8 @@
                 <a-button type="dashed" @click="addDomain">
                   <PlusOutlined /> 添加{{ label }}
                 </a-button>
-                <a-button type="primary" v-if="showSaveButton" style="margin-left: 10px" @click="onSave" :disabled="disableSave">
+                <a-button type="primary" v-if="showSaveButton" style="margin-left: 10px" @click="onSave"
+                  :disabled="disableSave">
                   <CheckOutlined /> 保存
                 </a-button>
               </a-form-item>
@@ -152,7 +154,7 @@ export default defineComponent({
     };
 
     // 提交表单事件
-    let storedDataLength = 0;
+    let storedDataLength = store.getters.getTestByName(props.name)?.length ?? 0;
     const onSave = () => {
       // 逻辑事件：
       // 对于一个空 datas，完成了一次表单填写，并点击了保存按钮 => store 保存了键值对数据
@@ -170,10 +172,21 @@ export default defineComponent({
 
     // 监听所有表单是否完成，以控制完成状态
     watch([showSaveButton, disableSave], ([showBtnValue, disabled]) => {
-      store.dispatch('addComplete', {
-        name: props.name,
-        data: (showBtnValue === false && disabled === false) ? true : false
-      });
+      if (showBtnValue === false && disabled === false) {
+        dynamicValidateForm.datas.forEach((item) => {
+          if (item.id === undefined) {
+            store.dispatch('addComplete', {
+              name: props.name,
+              data: true
+            });
+          }
+        })
+      } else {
+        store.dispatch('addComplete', {
+          name: props.name,
+          data: false
+        });
+      }
     });
 
     // 监听表单数据是否完整，以控制保存按钮的启用状态

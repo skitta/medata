@@ -14,8 +14,8 @@
       </a-tooltip>
       <a-tooltip>
         <template #title>提交新增数据</template>
-        <a-button type="link" size="small" shape="round" @click="handleSubmit" :loading="btnLoading"
-          :disabled="disableSubmit">
+        <a-button type="link" size="small" @click="handleSubmit" :loading="btnLoading"
+          :disabled="!showSubmitBtn">
           <check-outlined />
         </a-button>
       </a-tooltip>
@@ -156,17 +156,17 @@ export default defineComponent({
     })
 
     const btnLoading = ref(false);
-    const disableSubmit = computed(() => {
+    const showSubmitBtn = computed(() => {
       const completed = store.getters.getComplete;
       if (Object.keys(completed).length === 0) {
-        return true;
+        return false;
       }
       for (let key in completed) {
         if (completed[key] === false) {
-          return true;
+          return false;
         }
       }
-      return false;
+      return true;
     });
     const updateModalVisible = ref(false);
 
@@ -187,6 +187,13 @@ export default defineComponent({
 
     const router = useRouter();
     const handleCancel = () => {
+      // 若数据未提交，提醒用户确认
+      if (showSubmitBtn.value) {
+        message.warning("您有数据尚未提交");
+        console.log(showSubmitBtn.value);
+        return;
+      }
+      store.dispatch("setComplete", {});
       router.back();
     };
 
@@ -236,7 +243,7 @@ export default defineComponent({
       ...toRefs(state),
       formState,
       btnLoading,
-      disableSubmit,
+      showSubmitBtn,
       updateModalVisible,
 
       onUpdatePatient,

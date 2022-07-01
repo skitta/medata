@@ -55,13 +55,12 @@
 </template>
 
 <script>
-import { defineComponent, ref, reactive, toRaw } from "vue";
+import { defineComponent, ref, reactive, toRaw, onMounted } from "vue";
 import {
   Card, Form, Input, Select, DatePicker, InputNumber, Button, Modal, Radio, message
 } from "ant-design-vue";
 import { useStore } from "vuex";
 import { getGroups, getPatients, getTestsByPatientId, addPatient } from "@/api/kawasaki";
-import { computed } from "@vue/reactivity";
 import { useRouter } from "vue-router";
 
 const { Item } = Form;
@@ -100,7 +99,12 @@ export default defineComponent({
       resistance: false,
       relapse: false
     });
-    const groupOptions = computed(() => getGroups());
+    const groupOptions = ref([]);
+    onMounted(() => {
+      getGroups().then(data => {
+        groupOptions.value = data;
+      });
+    });
 
     const modalVisible = ref(false);
     const modalMsg = ref("");
@@ -204,6 +208,7 @@ export default defineComponent({
         addPatient(toRaw(formState))
           .then(data => {
             store.dispatch("setPatient", data);
+            store.dispatch("setTests", {});
             confireLoading.value = false;
             modalVisible.value = false;
             router.push({ name: "add-tests" });
@@ -230,13 +235,3 @@ export default defineComponent({
   }
 })
 </script>
-
-<style scoped>
-.ant-row {
-  margin-bottom: 20px;
-}
-
-.ant-card {
-  margin-bottom: 20px;
-}
-</style>

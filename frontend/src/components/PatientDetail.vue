@@ -16,7 +16,7 @@
 import { defineComponent } from "vue";
 import { Descriptions } from "ant-design-vue";
 import { computed } from "@vue/reactivity";
-import { getGroups } from "@/api/kawasaki";
+import { useStore } from "vuex";
 
 const { Item } = Descriptions;
 
@@ -32,7 +32,8 @@ export default defineComponent({
   },
 
   setup(props) {
-    const groupName = computed(() => getGroups().find(item => item.value === props.patient.group)?.label ?? "");
+    const store = useStore();
+    const groupName = computed(() => store.getters.getGroups.find(item => item.value === props.patient.group)?.label ?? "");
 
     return {
       groupName,
