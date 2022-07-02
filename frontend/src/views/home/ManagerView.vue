@@ -159,6 +159,7 @@ export default defineComponent({
     };
 
     const onSearch = (e) => {
+      apiParams.value.page = 1;
       apiParams.value.search = e.target.value;
     }
 
