@@ -1,17 +1,17 @@
 import numpy as np
 import pandas as pd
-from django.http import Http404
+from django.http import Http404, HttpResponse
 
-from rest_framework import viewsets
+from rest_framework import viewsets, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import filters
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
 
-# from scripts import zScord
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Patient, Echocardiography, BloodTest, LiverFunction, EnrollGroup, OtherTest, Samples
 from .serializers import PatientSerializer, BloodTestSerializer, LiverFunctionSerializer, EchocardiographySerializer, EnrollGroupSerializer, OtherTestSerializer, SamplesSerializer
+from .resource import PatientResource
 
 
 class PatientViewSet(viewsets.ModelViewSet):
@@ -24,6 +24,14 @@ class PatientViewSet(viewsets.ModelViewSet):
         'resistance': ['exact'],
         'relapse': ['exact']
     }
+
+    @action(detail=False)
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        dataset = PatientResource().export(queryset)
+        response = HttpResponse(dataset.csv, content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="persons.csv"'
+        return response
 
 
 class BloodTestViewSet(viewsets.ModelViewSet):
@@ -108,18 +116,6 @@ class PatientSummaryView(APIView):
         }
 
         return Response(summary)
-
-
-# !!! do not delete
-# def update_z_score(request):
-#     all_echos = Echocardiography.objects.all()
-#     count = 0
-#
-#     for echo in all_echos:
-#         patient = echo.patient
-#         echo.rca_z, echo.lmca_z = zScord.get_z_score(patient.gender, patient.height, patient.weight, echo.rca, echo.lmca)
-#
-#     return Response({'msg': "{n} results have updated".format(n=count)})
 
 
 class PatientCountByMonthView(APIView):

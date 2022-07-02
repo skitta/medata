@@ -58,13 +58,11 @@ export default defineComponent({
   },
 
   setup() {
-    let groupList = [];
-    onMounted(() => {
-      getGroups().then(data => {
-        groupList = data;
-      });
+    const groupList = ref([]);
+    onMounted(async () => {
+      groupList.value = await getGroups();
     });
-    const columns = [
+    const columns = computed(() => [
       {
         title: "登记号",
         dataIndex: "registered_ID",
@@ -86,7 +84,7 @@ export default defineComponent({
         title: "分组",
         dataIndex: "group",
         key: "group",
-        filters: groupList.map(group => ({ text: group.label, value: group.value })),
+        filters: groupList.value.map(group => ({ text: group.label, value: group.value })),
       },
       {
         title: "标签",
@@ -97,7 +95,7 @@ export default defineComponent({
           { text: "复发", value: "relapse" },
         ],
       }
-    ]
+    ])
     const { data, run, loading, current, pageSize } = usePagination(getPatients, {
       pagination: {
         currentKey: "page",
@@ -127,7 +125,7 @@ export default defineComponent({
           registered_ID: patient.registered_ID,
           full_name: patient.full_name,
           in_date: patient.in_date,
-          group: groupList.find(item => item.value === patient.group)?.label || "未确定",
+          group: groupList.value.find(item => item.value === patient.group)?.label || "未确定",
           tags: tags,
         };
       });
@@ -147,13 +145,17 @@ export default defineComponent({
       };
 
       const { group, tags } = filters;
-      const tagsFilter = {};
+      let tagsFilter = {};
       tags?.forEach(key => tagsFilter[key] = true);
+      const searchField = apiParams.value.search || null;
 
-      apiParams.value.page = pagination?.current;
-      apiParams.value.ordering = sortField();
-      apiParams.value.group__in = group;
-      apiParams.value = { ...apiParams.value, ...tagsFilter };
+      apiParams.value = {
+        page: pagination?.current,
+        ordering: sortField(),
+        group__in: group?.toString(),
+        search: searchField,
+        ...tagsFilter,
+      };
     };
 
     const onSearch = (e) => {

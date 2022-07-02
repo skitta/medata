@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'django_filters'
+    'django_filters',
+    'import_export'
 ]
 
 MIDDLEWARE = [
@@ -152,3 +153,5 @@ REST_FRAMEWORK = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+IMPORT_EXPORT_USE_TRANSACTIONS = True
