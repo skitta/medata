@@ -100,10 +100,8 @@ export default defineComponent({
       relapse: false
     });
     const groupOptions = ref([]);
-    onMounted(() => {
-      getGroups().then(data => {
-        groupOptions.value = data;
-      });
+    onMounted(async () => {
+      groupOptions.value = await getGroups();
     });
 
     const modalVisible = ref(false);

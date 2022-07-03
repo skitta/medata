@@ -15,6 +15,22 @@ axios.interceptors.request.use(
   }
 );
 
+function download(response) {
+  const blob = new Blob([response.data], { type: "text/csv" });
+  const fileName = decodeURI(response.headers["content-disposition"].split("=")[1]);
+  if ("download" in document.createElement("a")) {
+    const a = document.createElement("a");
+    a.download = fileName;
+    a.href = window.URL.createObjectURL(blob);
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(a.href);
+    document.body.removeChild(a);
+  } else {
+    navigator.msSaveBlob(blob, fileName);
+  }
+}
+
 function getGroups() {
   return new Promise((resolve, reject) => {
     let groupList = store.getters.getGroups;
@@ -71,6 +87,22 @@ function updatePatient(id, data) {
   });
 }
 
+function exportPatients(params) {
+  return new Promise((resolve, reject) => {
+    axios.get(
+      "patients/export/",
+      {
+        params: params
+      }
+    ).then(response => {
+      download(response);
+      resolve(response.headers);
+    }).catch(error => {
+      reject(error.data);
+    });
+  });
+}
+
 function addTestByName(name, data) {
   return new Promise((resolve, reject) => {
     axios.post(`${name}/`, data).then(response => {
@@ -95,6 +127,86 @@ function updateTestByName(name, id, data) {
   return new Promise((resolve, reject) => {
     axios.put(`${name}/${id}/`, data).then(response => {
       resolve(response.data);
+    }).catch(error => {
+      reject(error.data);
+    });
+  });
+}
+
+function exportBloodTests(params) {
+  return new Promise((resolve, reject) => {
+    axios.get(
+      "bloodTests/export/",
+      {
+        params: params
+      }
+    ).then(response => {
+      download(response);
+      resolve(response.headers);
+    }).catch(error => {
+      reject(error.data);
+    });
+  });
+}
+
+function exportLiverFunctions(params) {
+  return new Promise((resolve, reject) => {
+    axios.get(
+      "liverFunction/export/",
+      {
+        params: params
+      }
+    ).then(response => {
+      download(response);
+      resolve(response.headers);
+    }).catch(error => {
+      reject(error.data);
+    });
+  });
+}
+
+function exportEchocardiography(params) {
+  return new Promise((resolve, reject) => {
+    axios.get(
+      "echocardiography/export/",
+      {
+        params: params
+      }
+    ).then(response => {
+      download(response);
+      resolve(response.headers);
+    }).catch(error => {
+      reject(error.data);
+    });
+  });
+}
+
+function exportOtherTests(params) {
+  return new Promise((resolve, reject) => {
+    axios.get(
+      "otherTests/export/",
+      {
+        params: params
+      }
+    ).then(response => {
+      download(response);
+      resolve(response.headers);
+    }).catch(error => {
+      reject(error.data);
+    });
+  });
+}
+
+function exportSamples(params) {
+  return new Promise((resolve, reject) => {
+    axios.get(
+      "samples/export/",
+      {
+        params: params
+      }
+    ).then(response => {
+      download(response);
+      resolve(response.headers);
     }).catch(error => {
       reject(error.data);
     });
@@ -131,15 +243,33 @@ function getAgeByGroup() {
   });
 }
 
+function getExportFile() {
+  return new Promise((resolve, reject) => {
+    axios.get("export/all/").then(response => {
+      download(response);
+      resolve(response.headers);
+    }).catch(error => {
+      reject(error.data);
+    });
+  });
+}
+
 export {
   getGroups,
   addPatient,
   getPatients,
   updatePatient,
+  exportPatients,
   addTestByName,
   getTestsByPatientId,
   updateTestByName,
+  exportBloodTests,
+  exportLiverFunctions,
+  exportEchocardiography,
+  exportOtherTests,
+  exportSamples,
   getSummary,
   getCountByMonth,
   getAgeByGroup,
+  getExportFile
 }

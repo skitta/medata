@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import zipfile
+
 from django.http import Http404, HttpResponse
 
 from rest_framework import viewsets, filters
@@ -12,7 +14,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Patient, Echocardiography, BloodTest, LiverFunction, EnrollGroup, OtherTest, Samples
 from .serializers import PatientSerializer, BloodTestSerializer, LiverFunctionSerializer, EchocardiographySerializer,\
     EnrollGroupSerializer, OtherTestSerializer, SamplesSerializer
-from .resource import PatientResource
+from .resource import PatientResource, BloodTestResource, LiverFunctionResource, EchocardiographyResource, \
+    OtherTestResource, SamplesResource
 
 
 class PatientViewSet(viewsets.ModelViewSet):
@@ -26,55 +29,115 @@ class PatientViewSet(viewsets.ModelViewSet):
         'relapse': ['exact']
     }
 
-    @action(detail=False)
+    @action(detail=False, methods=['get'])
     def export(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         dataset = PatientResource().export(queryset)
-        response = HttpResponse(dataset.csv, content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="persons.csv"'
+        response = HttpResponse(dataset.csv, headers={
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename="patients.csv"'
+        })
         return response
 
 
 class BloodTestViewSet(viewsets.ModelViewSet):
     queryset = BloodTest.objects.all()
     serializer_class = BloodTestSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['=patient__id']
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'patient': ['exact', 'in'],
+    }
+
+    @action(detail=False, methods=['get'])
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        dataset = BloodTestResource().export(queryset)
+        response = HttpResponse(dataset.csv, headers={
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename="bloodTests.csv"'
+        })
+        return response
 
 
 class LiverFunctionViewSet(viewsets.ModelViewSet):
     queryset = LiverFunction.objects.all()
     serializer_class = LiverFunctionSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['=patient__id']
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'patient': ['exact', 'in'],
+    }
+
+    @action(detail=False, methods=['get'])
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        dataset = LiverFunctionResource().export(queryset)
+        response = HttpResponse(dataset.csv, headers={
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename="liverFunctions.csv"'
+        })
+        return response
 
 
 class EchocardiographyViewSet(viewsets.ModelViewSet):
     queryset = Echocardiography.objects.all()
     serializer_class = EchocardiographySerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['=patient__id']
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'patient': ['exact', 'in'],
+    }
+
+    @action(detail=False, methods=['get'])
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        dataset = EchocardiographyResource().export(queryset)
+        response = HttpResponse(dataset.csv, headers={
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename="echocardiography.csv"'
+        })
+        return response
 
 
 class OtherTestViewSet(viewsets.ModelViewSet):
     queryset = OtherTest.objects.all()
     serializer_class = OtherTestSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['=patient__id']
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'patient': ['exact', 'in'],
+    }
+
+    @action(detail=False, methods=['get'])
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        dataset = OtherTestResource().export(queryset)
+        response = HttpResponse(dataset.csv, headers={
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename="others.csv"'
+        })
+        return response
 
 
 class SamplesViewSet(viewsets.ModelViewSet):
     queryset = Samples.objects.all()
     serializer_class = SamplesSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['=patient__id']
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'patient': ['exact', 'in'],
+    }
+
+    @action(detail=False, methods=['get'])
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        dataset = SamplesResource().export(queryset)
+        response = HttpResponse(dataset.csv, headers={
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename="samples.csv"'
+        })
+        return response
 
 
 class EnrollGroupViewSet(viewsets.ModelViewSet):
     queryset = EnrollGroup.objects.all()
     serializer_class = EnrollGroupSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['=patient__id']
 
 
 class PatientSummaryView(APIView):
@@ -174,3 +237,31 @@ class GetAllTestsByPatientIDView(APIView):
             if not context.get(key):
                 context.pop(key)
         return Response(context)
+
+
+class ExportAllView(APIView):
+    """
+    API: Export All Data
+    """
+    @staticmethod
+    def get(request):
+        patients = PatientResource().export()
+        blood_tests = BloodTestResource().export()
+        liver_function = LiverFunctionResource().export()
+        cardiography = EchocardiographyResource().export()
+        other_tests = OtherTestResource().export()
+        samples = SamplesResource().export()
+
+        response = HttpResponse(content_type='application/zip')
+
+        zf = zipfile.ZipFile(response, 'w')
+        zf.writestr('patients.csv', patients.csv)
+        zf.writestr('blood_test.csv', blood_tests.csv)
+        zf.writestr('liver_function.csv', liver_function.csv)
+        zf.writestr('cardiography.csv', cardiography.csv)
+        zf.writestr('other_test.csv', other_tests.csv)
+        zf.writestr('samples.csv', samples.csv)
+
+        response['Content-Disposition'] = f'attachment; filename=exported.zip'
+
+        return response

@@ -1,52 +1,53 @@
 <template>
   <div class="dashboard">
-    <a-row :gutter="16">
-      <a-col :span="8">
-        <a-card :loading="sampleCountsLoading">
-          样本量
-          <a-row>
-            <a-col v-for="(value, key) in sampleCounts" :key="key" :span="24 / groups.length">
-              <a-statistic :title="key" :value="value" suffix="人"></a-statistic>
-            </a-col>
-          </a-row>
-        </a-card>
-      </a-col>
-      <a-col :span="8">
-        <a-card :loading="genderRateLoading">
-          性别比例 (男:女)
-          <a-row>
-            <a-col v-for="(item, key) in genderCounts" :key="key" :span="24 / groups.length">
-              <a-statistic :title="key" :value="(item.M / item.F).toFixed(2)"></a-statistic>
-            </a-col>
-          </a-row>
-        </a-card>
-      </a-col>
-      <a-col :span="8">
-        <a-card :loading="ageLoading">
-          平均年龄
-          <a-row>
-            <a-col v-for="(value, key) in ageAverage" :key="key" :span="24 / groups.length">
-              <a-statistic :title="key" :value="(value / 12).toFixed(2)" suffix="岁"></a-statistic>
-            </a-col>
-          </a-row>
-        </a-card>
-      </a-col>
-    </a-row>
-    <div class="plot">
-      <a-card title="样本-时间分布" :loading="linePlotLoading">
-        <div id="count_line"></div>
-      </a-card>
-    </div>
-    <div class="plot">
-      <a-card title="年龄分布" :loading="histPlotLoading">
-        <a-row>
-          <a-col v-for="g in groups" :key="g" :span="24 / groups.length">
-            <div class="plot-title">{{ g }}</div>
-            <div :id="`age_hist_${g.replaceAll(' ', '_')}`" class="plot-content"></div>
-          </a-col>
-        </a-row>
-      </a-card>
-    </div>
+    <a-space direction="vertical" :size="16" style="width: 100%">
+      <a-row :gutter="16">
+        <a-col :span="8">
+          <a-card :loading="sampleCountsLoading">
+            样本量
+            <a-row>
+              <a-col v-for="(value, key) in sampleCounts" :key="key" :span="24 / groups.length">
+                <a-statistic :title="key" :value="value" suffix="人"></a-statistic>
+              </a-col>
+            </a-row>
+          </a-card>
+        </a-col>
+        <a-col :span="8">
+          <a-card :loading="genderRateLoading">
+            性别比例 (男:女)
+            <a-row>
+              <a-col v-for="(item, key) in genderCounts" :key="key" :span="24 / groups.length">
+                <a-statistic :title="key" :value="(item.M / item.F).toFixed(2)"></a-statistic>
+              </a-col>
+            </a-row>
+          </a-card>
+        </a-col>
+        <a-col :span="8">
+          <a-card :loading="ageLoading">
+            平均年龄
+            <a-row>
+              <a-col v-for="(value, key) in ageAverage" :key="key" :span="24 / groups.length">
+                <a-statistic :title="key" :value="(value / 12).toFixed(2)" suffix="岁"></a-statistic>
+              </a-col>
+            </a-row>
+          </a-card>
+        </a-col>
+      </a-row>
+      <a-row>
+        <a-col :span="24">
+          <a-card title="样本-时间分布" :loading="linePlotLoading">
+            <div id="count_line"></div>
+          </a-card>
+        </a-col>
+      </a-row>
+      <a-row :gutter="16">
+        <a-col v-for="g in groups" :key="g" :span="24 / groups.length">
+          <a-card :title="`年龄分布(${g})`">
+            <div :id="`age_hist_${g.replaceAll(' ', '_')}`"></div>
+          </a-card>
+        </a-col>
+      </a-row>
+    </a-space>
   </div>
 </template>
 
@@ -59,7 +60,7 @@ import {
   nextTick
 } from "vue";
 import { Line, Histogram } from "@antv/g2plot";
-import { Row, Col, Card, Statistic } from "ant-design-vue";
+import { Row, Col, Card, Statistic, Space } from "ant-design-vue";
 import { getSummary, getCountByMonth, getAgeByGroup } from "@/api/kawasaki";
 
 export default defineComponent({
@@ -69,6 +70,7 @@ export default defineComponent({
     ACol: Col,
     ACard: Card,
     AStatistic: Statistic,
+    ASpace: Space
   },
   setup() {
     const state = reactive({
@@ -175,21 +177,5 @@ export default defineComponent({
 .dashboard {
   padding: 24px;
   margin: 20px 40px;
-}
-
-.plot {
-  margin-top: 20px;
-}
-
-.plot-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  widows: 100%;
-  text-align: center;
-}
-
-.plot-content {
-  padding: 20px;
 }
 </style>

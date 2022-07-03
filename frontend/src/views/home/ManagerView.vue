@@ -1,13 +1,28 @@
 <template>
   <div class="manager">
     <a-space direction="vertical" style="width: 100%">
-      <a-row>
+      <a-row justify="space-between">
         <a-col :span="4">
           <a-input placeholder="搜索" :allow-clear="true" @press-enter="onSearch" @change="onSearch">
             <template #prefix>
               <search-outlined style="color: rgba(0,0,0,.5)" />
             </template>
           </a-input>
+        </a-col>
+        <a-col :span="2" style="text-align: right">
+          <a-dropdown :trigger="['click']">
+            <template #overlay>
+              <a-menu @click="handleExport">
+                <a-menu-item key="1">所有数据</a-menu-item>
+                <a-menu-item key="2">所选数据</a-menu-item>
+              </a-menu>
+            </template>
+            <a-button type="primary">
+              <download-outlined />
+              导出
+            </a-button>
+          </a-dropdown>
+
         </a-col>
       </a-row>
 
@@ -37,13 +52,15 @@
 
 <script>
 import { defineComponent, onMounted, ref, watch } from "vue";
-import { Table, Tag, Input, Row, Col, Space, Button } from "ant-design-vue";
+import { Table, Tag, Input, Row, Col, Space, Button, Dropdown, Menu } from "ant-design-vue";
 import { usePagination } from 'vue-request'
 import { computed } from "@vue/reactivity";
-import { getGroups, getPatients, getTestsByPatientId } from "@/api/kawasaki";
-import { SearchOutlined } from "@ant-design/icons-vue";
+import { getGroups, getPatients, getTestsByPatientId, getExportFile } from "@/api/kawasaki";
+import { SearchOutlined, DownloadOutlined } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
+
+const { Item } = Menu;
 
 export default defineComponent({
   components: {
@@ -54,7 +71,11 @@ export default defineComponent({
     AInput: Input,
     ASpace: Space,
     AButton: Button,
+    ADropdown: Dropdown,
+    AMenu: Menu,
+    AMenuItem: Item,
     SearchOutlined,
+    DownloadOutlined
   },
 
   setup() {
@@ -178,6 +199,14 @@ export default defineComponent({
       }
     }
 
+    const handleExport = async (e) => {
+      console.log('click', e.key);
+      if (e.key === "1") {
+        const data = await getExportFile();
+        console.log(data["content-disposition"].split("=")[1], data["content-length"]);
+      }
+    }
+
     watch(() => apiParams, (params) => {
       run(params.value);
     }, {
@@ -192,6 +221,7 @@ export default defineComponent({
       handleTableChange,
       onSearch,
       gotoAdd,
+      handleExport,
     };
   }
 })
