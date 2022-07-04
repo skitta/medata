@@ -63,6 +63,7 @@ import { useStore } from "vuex";
 const { Item } = Menu;
 
 export default defineComponent({
+  name: "ManagerView",
   components: {
     ARow: Row,
     ACol: Col,

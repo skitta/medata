@@ -49,8 +49,8 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.name !== 'login' && !store.getters.getToken) next({ name: 'login' })
-  else next()
+  if (to.name !== 'login' && store.getters.getToken === null) { next({ name: 'login' }) }
+  else { next() }
 })
 
 export default router

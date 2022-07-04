@@ -23,6 +23,11 @@
           管理
         </a-menu-item>
       </a-menu>
+      <!-- <div class="logout">
+        <a-button type="link" size="small" @click="logout">
+          退出
+        </a-button>
+      </div> -->
     </a-layout-header>
     <a-layout-content>
       <router-view v-slot="{ Component }">
@@ -39,7 +44,7 @@
 
 <script>
 import { defineComponent, onMounted, reactive, toRefs } from "vue";
-import { Layout, Menu } from "ant-design-vue";
+import { Layout, Menu, Button } from "ant-design-vue";
 import {
   BarChartOutlined,
   PlusSquareOutlined,
@@ -59,6 +64,7 @@ export default defineComponent({
     AMenuItem: Item,
     ALayoutContent: Content,
     ALayoutFooter: Footer,
+    AButton: Button,
     BarChartOutlined,
     PlusSquareOutlined,
     UserOutlined,
@@ -75,6 +81,12 @@ export default defineComponent({
       });
     };
 
+    // const logout = () => {
+    //   router.push({
+    //     name: "login",
+    //   });
+    // }
+
     onMounted(() => {
       changeRouter({ selectedKeys: state.selectedKeys });
     });
@@ -88,6 +100,7 @@ export default defineComponent({
     return {
       ...toRefs(state),
       changeRouter,
+      // logout,
     };
   },
 });
@@ -107,10 +120,16 @@ export default defineComponent({
   background: rgba(255, 255, 255, 0.3);
 }
 
-.ant-row-rtl .logo {
+.logout {
+  position: absolute;
+  top: 0;
+  right: 50px;
+}
+
+/* .ant-row-rtl .logo {
   float: right;
   margin: 16px 0 16px 24px;
-}
+} */
 
 [data-theme="dark"] .site-layout-content {
   background: #141414;

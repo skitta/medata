@@ -54,6 +54,20 @@ const { Item } = Form;
 const { Password } = Input;
 
 export default defineComponent({
+  components: {
+    UserOutlined,
+    LockOutlined,
+    AForm: Form,
+    AFormItem: Item,
+    AInput: Input,
+    AButton: Button,
+    ACard: Card,
+    AInputPassword: Password,
+    ASelect: Select,
+    ParticlesBg,
+    AAlert: Alert,
+  },
+  
   setup() {
     const store = useStore();
     store.dispatch('setToken', null);
@@ -90,7 +104,13 @@ export default defineComponent({
         })
         .catch(err => {
           console.log(err);
-          formState.msg = "Username or password is incorrect";
+          if (err.code === 'ERR_NETWORK') {
+            formState.msg = "网络错误";
+          } else if (err.code === 'ERR_BAD_REQUEST') {
+            formState.msg = "用户名或密码错误";
+          } else {
+            formState.msg = "未知错误";
+          }
         });
     };
 
@@ -104,20 +124,6 @@ export default defineComponent({
       handleSubmit,
       handleInputChange,
     };
-  },
-
-  components: {
-    UserOutlined,
-    LockOutlined,
-    AForm: Form,
-    AFormItem: Item,
-    AInput: Input,
-    AButton: Button,
-    ACard: Card,
-    AInputPassword: Password,
-    ASelect: Select,
-    ParticlesBg,
-    AAlert: Alert,
   },
 });
 

@@ -13,13 +13,32 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, onMounted } from "vue";
 import { Row, Col } from "ant-design-vue";
+import { onBeforeRouteUpdate, useRouter } from "vue-router";
 
 export default defineComponent({
+  name: "AddView",
   components: {
     ARow: Row,
     ACol: Col,
+  },
+
+  setup() {
+    const router = useRouter();
+
+    onBeforeRouteUpdate(async (to) => {
+      if (to.name === 'add') {
+        return false;
+      }
+    });
+
+    onMounted(async () => {
+      router.push({
+        name: 'add-patient',
+      });
+    });
+    return {};
   },
 });
 </script>

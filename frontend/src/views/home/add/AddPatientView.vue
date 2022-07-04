@@ -68,7 +68,7 @@ const { Option } = Select;
 const { Group } = Radio;
 
 export default defineComponent({
-  name: "PatientForm",
+  name: "AddPatientView",
   components: {
     ACard: Card,
     AForm: Form,

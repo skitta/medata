@@ -72,6 +72,7 @@ const { Group } = Radio;
 const { Panel } = Collapse;
 
 export default defineComponent({
+  name: "AddTestsView",
   components: {
     APageHeader: PageHeader,
     ASpace: Space,

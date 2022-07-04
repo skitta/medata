@@ -1,7 +1,15 @@
 import axios from "axios";
 import store from "@/store";
 
-axios.defaults.baseURL = 'http://127.0.0.1:8000/api/kawasaki/';
+if (process.env.NODE_ENV == 'development') {    
+  axios.defaults.baseURL = 'http://127.0.0.1:8000/api/kawasaki/';
+} else if (process.env.NODE_ENV == 'production') {    
+  axios.defaults.baseURL = 'https://0.0.0.0:8000/api/kawasaki/'; // TODO: change to production url
+}
+
+axios.defaults.timeout = 10000;
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+
 axios.interceptors.request.use(
   config => {
     const token = store.getters.getToken;
@@ -45,7 +53,7 @@ function getGroups() {
         store.dispatch("setGroups", groupList);
         resolve(groupList);
       }).catch(error => {
-        reject(error.data);
+        reject(error);
       });
     }
   });
@@ -57,7 +65,7 @@ function addPatient(data) {
     axios.post("patients/", data).then(response => {
       resolve(response.data);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -72,7 +80,7 @@ function getPatients(params) {
     ).then(response => {
       resolve(response.data);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -82,7 +90,7 @@ function updatePatient(id, data) {
     axios.patch(`patients/${id}/`, data).then(response => {
       resolve(response.data);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -98,7 +106,7 @@ function exportPatients(params) {
       download(response);
       resolve(response.headers);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -108,7 +116,7 @@ function addTestByName(name, data) {
     axios.post(`${name}/`, data).then(response => {
       resolve(response.data);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -118,7 +126,7 @@ function getTestsByPatientId(id) {
     axios.get(`all-tests-by-patient/${id}/`).then(response => {
       resolve(response.data);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -128,7 +136,7 @@ function updateTestByName(name, id, data) {
     axios.put(`${name}/${id}/`, data).then(response => {
       resolve(response.data);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -144,7 +152,7 @@ function exportBloodTests(params) {
       download(response);
       resolve(response.headers);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -160,7 +168,7 @@ function exportLiverFunctions(params) {
       download(response);
       resolve(response.headers);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -176,7 +184,7 @@ function exportEchocardiography(params) {
       download(response);
       resolve(response.headers);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -192,7 +200,7 @@ function exportOtherTests(params) {
       download(response);
       resolve(response.headers);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -208,7 +216,7 @@ function exportSamples(params) {
       download(response);
       resolve(response.headers);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -218,7 +226,7 @@ function getSummary() {
     axios.get("summary/").then(response => {
       resolve(response.data);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -228,7 +236,7 @@ function getCountByMonth() {
     axios.get("count-by-month/").then(response => {
       resolve(response.data);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -238,7 +246,7 @@ function getAgeByGroup() {
     axios.get("age-by-group/").then(response => {
       resolve(response.data);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }
@@ -249,7 +257,7 @@ function getExportFile() {
       download(response);
       resolve(response.headers);
     }).catch(error => {
-      reject(error.data);
+      reject(error);
     });
   });
 }

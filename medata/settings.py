@@ -22,11 +22,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '!xkhzj7z0@ebwpm2k*edt15ixy+*kitv-g6u)ii&f2_#j+uhn5'
 
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Application definition
 
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,11 +56,32 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# corsheaders settings
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_EXPOSE_HEADERS = [
     'content-disposition',
 ]
+
+# rest_framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+            'rest_framework.authentication.BasicAuthentication',
+            'rest_framework.authentication.SessionAuthentication',
+            'rest_framework.authentication.TokenAuthentication',
+        ],
+    'DEFAULT_PERMISSION_CLASSES': [
+            'rest_framework.permissions.IsAuthenticated',
+        ],
+}
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# Import_export settings
+IMPORT_EXPORT_USE_TRANSACTIONS = True
+
 
 # If DEBUG = False, this needs to be set.
 ALLOWED_HOSTS = ['*']
@@ -88,7 +110,6 @@ WSGI_APPLICATION = 'medata.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -99,7 +120,6 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -118,7 +138,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Asia/Shanghai'
@@ -132,29 +151,22 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
-
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'frontend/dist/static'),
 ]
 
 STATIC_URL = '/static/'
 
-
 STATIC_ROOT = 'static'
 
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-            'rest_framework.authentication.BasicAuthentication',
-            'rest_framework.authentication.SessionAuthentication',
-            'rest_framework.authentication.TokenAuthentication',
-        ],
-    'DEFAULT_PERMISSION_CLASSES': [
-            'rest_framework.permissions.IsAuthenticated',
-        ],
-}
 
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+# HTTPS settings
+# SESSION_COOKIE_SECURE = True
 
-IMPORT_EXPORT_USE_TRANSACTIONS = True
+# CSRF_COOKIE_SECURE = True
+
+# SECURE_SSL_REDIRECT = True
+
+# SECURE_HSTS_SECONDS = True
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
