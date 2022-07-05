@@ -7,5 +7,4 @@
 
 *.backup
 **/*.bak
-static
 scripts
