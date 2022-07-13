@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import zipfile
 
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, FileResponse
 
 from rest_framework import viewsets, filters
 from rest_framework.views import APIView
@@ -252,16 +252,14 @@ class ExportAllView(APIView):
         other_tests = OtherTestResource().export()
         samples = SamplesResource().export()
 
-        response = HttpResponse(content_type='application/zip')
+        with zipfile.ZipFile('/tmp/exported.zip', 'w') as zf:
+            zf.writestr('patients.csv', patients.csv)
+            zf.writestr('blood_test.csv', blood_tests.csv)
+            zf.writestr('liver_function.csv', liver_function.csv)
+            zf.writestr('cardiography.csv', cardiography.csv)
+            zf.writestr('other_test.csv', other_tests.csv)
+            zf.writestr('samples.csv', samples.csv)
 
-        zf = zipfile.ZipFile(response, 'w')
-        zf.writestr('patients.csv', patients.csv)
-        zf.writestr('blood_test.csv', blood_tests.csv)
-        zf.writestr('liver_function.csv', liver_function.csv)
-        zf.writestr('cardiography.csv', cardiography.csv)
-        zf.writestr('other_test.csv', other_tests.csv)
-        zf.writestr('samples.csv', samples.csv)
-
-        response['Content-Disposition'] = f'attachment; filename=exported.zip'
+        response = FileResponse(open('/tmp/exported.zip', 'rb'), as_attachment=True)
 
         return response
