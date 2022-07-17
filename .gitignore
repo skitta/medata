@@ -9,3 +9,4 @@
 **/*.bak
 scripts
 tmp
+venv
