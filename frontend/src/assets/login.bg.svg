@@ -1,0 +1,16 @@
+
+<svg width="802px" height="600px" viewBox="0 0 802 600" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <radialGradient cx="50%" cy="0%" fx="50%" fy="0%" r="100%" gradientTransform="translate(0.500000,0.000000),scale(0.750000,1.000000),rotate(90.000000),translate(-0.500000,-0.000000)" id="radialGradient-_96ma1tq41-1">
+            <stop stop-color="#F1F8FF" offset="0%"></stop>
+            <stop stop-color="#CAE5F1" offset="100%"></stop>
+        </radialGradient>
+    </defs>
+    <g id="Portofolio-2" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Bg">
+            <rect id="Bg-artboard" fill="url(#radialGradient-_96ma1tq41-1)" x="0" y="0" width="800" height="600"></rect>
+            <path d="M0,550.751123 C0,550.751123 122.804212,596.127611 206.177209,550.751123 C289.550207,505.374636 268.414404,618.909575 496.925777,582.025815 C725.43715,545.142055 709.39119,607.774674 799.948405,573.519746 C799.948405,569.933209 799.948405,598.909385 799.948405,598.909385 L0,600 L0,550.751123 Z" id="Path-75" fill="#FFFFFF" opacity="0.24"></path>
+            <path d="M2.27373675e-13,577.246475 C121.365202,546.227448 61.0920766,458.528179 309.001986,521.023979 C556.911895,583.51978 496.189617,492.168047 597.42192,474.851425 C698.654224,457.534803 767.756311,531.30379 801.424083,521.104436 L801.424083,600 L2.27373675e-13,600 L2.27373675e-13,577.246475 Z" id="Path-77" fill="#FFFFFF" opacity="0.203849638"></path>
+        </g>
+    </g>
+</svg>

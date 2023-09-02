@@ -1,14 +1,16 @@
+# editors
 .idea
 .vscode
 
+# system
+**/.DS_Store
+
+# project
 *.sqlite3
 **/__pycache__
+
+# django
 **/migrations
 
-*.backup
-**/*.bak
-scripts
-tmp
-venv
-frontend/dist/static
-
+# node
+**/node_modules
