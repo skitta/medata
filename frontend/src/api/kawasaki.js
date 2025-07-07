@@ -2,7 +2,7 @@ import axios from "axios";
 import store from "@/store";
 import Cookies from "js-cookie";
 
-axios.defaults.baseURL = 'https://192.168.1.10/api/kawasaki/';
+axios.defaults.baseURL = '/api/kawasaki/';
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
 axios.defaults.headers.post['X-CSRFToken'] = Cookies.get('csrftoken') || '';
 
@@ -41,8 +41,8 @@ function getGroups() {
     if (groupList.length !== 0) {
       resolve(groupList);
     } else {
-      axios.get("enrollGroups/").then(response => {
-        groupList = response.data.results.map(group => ({
+      axios.get("groups/").then(response => {
+        groupList = response.data.map(group => ({
           value: group.id,
           label: group.name,
         }));
@@ -53,7 +53,6 @@ function getGroups() {
       });
     }
   });
-
 }
 
 function addPatient(data) {

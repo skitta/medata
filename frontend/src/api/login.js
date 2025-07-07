@@ -1,7 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-axios.defaults.baseURL = 'https://192.168.1.10/api/';
+axios.defaults.baseURL = '/api/';
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
 axios.defaults.headers.post['X-CSRFToken'] = Cookies.get('csrftoken') || '';
 
