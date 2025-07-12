@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import path from 'path';
 import Components from 'unplugin-vue-components/vite';
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
 
@@ -10,19 +11,21 @@ export default defineConfig(({mode}) => ({
     Components({
       resolvers: [
         AntDesignVueResolver({
-          importStyle: true,
+          importStyle: false,
           resolveIcons: true
         })
       ]
     })
   ],
-  //   resolve: {
-  //     alias: {
-  //       '@': path.resolve(__dirname, 'src')
-  //     }
-  //   },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src')
+    }
+  },
   build: {
-    assetsDir: 'static'
+    assetsDir: 'static',
+    // 提高 chunk 大小警告阈值
+    chunkSizeWarningLimit: 800
   },
   css: {
     preprocessorOptions: {
@@ -32,6 +35,8 @@ export default defineConfig(({mode}) => ({
     }
   },
   define: {
-    __VUE_PROD_DEVTOOLS__: mode !== 'production'
+    __VUE_PROD_DEVTOOLS__: false,
+    __VUE_OPTIONS_API__: true,
+    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false
   }
 }))

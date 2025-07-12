@@ -1,7 +1,7 @@
 <template>
   <a-layout>
     <a-layout-header>
-      <div class="logo" />
+      <div class="logo"></div>
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="horizontal" :style="{ lineHeight: '64px' }"
         @select="changeRouter">
         <a-menu-item key="dashboard">
@@ -42,73 +42,41 @@
   </a-layout>
 </template>
 
-<script>
-import { defineComponent, onMounted, reactive, toRefs } from "vue";
-import { Layout, Menu, Button } from "ant-design-vue";
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
+import { Layout as ALayout, Menu as AMenu, LayoutHeader as ALayoutHeader, LayoutContent as ALayoutContent, LayoutFooter as ALayoutFooter, MenuItem as AMenuItem } from "ant-design-vue";
 import {
   BarChartOutlined,
   PlusSquareOutlined,
   UserOutlined,
 } from "@ant-design/icons-vue";
 import { onBeforeRouteUpdate, useRouter } from "vue-router";
+import type { SelectInfo } from "ant-design-vue/es/menu/src/interface";
 
-const { Header, Content, Footer } = Layout;
-const { Item } = Menu;
+const selectedKeys = ref<string[]>(["dashboard"]);
 
-export default defineComponent({
-  name: "HomeView",
-  components: {
-    ALayout: Layout,
-    ALayoutHeader: Header,
-    AMenu: Menu,
-    AMenuItem: Item,
-    ALayoutContent: Content,
-    ALayoutFooter: Footer,
-    AButton: Button,
-    BarChartOutlined,
-    PlusSquareOutlined,
-    UserOutlined,
-  },
-  setup() {
-    const state = reactive({
-      selectedKeys: ["dashboard"],
-    });
+const router = useRouter();
+const changeRouter = (info: SelectInfo): void => {
+  selectedKeys.value = info.selectedKeys as string[];
+  router.push({
+    name: info.selectedKeys[0] as string,
+  });
+};
 
-    const router = useRouter();
-    const changeRouter = ({ selectedKeys }) => {
-      router.push({
-        name: selectedKeys[0],
-      });
-    };
+onMounted(() => {
+  changeRouter({ selectedKeys: selectedKeys.value } as SelectInfo);
+});
 
-    // const logout = () => {
-    //   router.push({
-    //     name: "login",
-    //   });
-    // }
-
-    onMounted(() => {
-      changeRouter({ selectedKeys: state.selectedKeys });
-    });
-
-    onBeforeRouteUpdate(async (to) => {
-      if (to.name === 'home') {
-        return false;
-      }
-    })
-
-    return {
-      ...toRefs(state),
-      changeRouter,
-      // logout,
-    };
-  },
+onBeforeRouteUpdate((to) => {
+  if (to.name === 'home') {
+    return false;
+  }
+  return true;
 });
 </script>
 
 <style scoped>
 .ant-layout-content {
-  /* ant-layout-header: 64px, ant-layout-footer: 70px */
   min-height: calc(100vh - 134px)
 }
 
@@ -117,8 +85,7 @@ export default defineComponent({
   width: 44px;
   height: 44px;
   margin: 10px 24px 10px 0;
-  /* background: rgba(255, 255, 255, 0.3); */
-  background-image: url("../assets/logo.svg");
+  background-image: url("@/assets/logo.svg");
   background-size: auto;
   background-repeat: no-repeat;
   background-position: center;
@@ -129,11 +96,6 @@ export default defineComponent({
   top: 0;
   right: 50px;
 }
-
-/* .ant-row-rtl .logo {
-  float: right;
-  margin: 16px 0 16px 24px;
-} */
 
 [data-theme="dark"] .site-layout-content {
   background: #141414;

@@ -8,36 +8,24 @@
   </a-config-provider>
 </template>
 
-<script>
-import { defineComponent } from "vue";
-import { useStore } from "vuex";
-import { ConfigProvider } from "ant-design-vue";
+<script setup lang="ts">
+import { useMainStore } from "./stores";
+import { ConfigProvider as AConfigProvider } from "ant-design-vue";
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 
 dayjs.locale('zh-cn');
 
-export default defineComponent({
-  components: {
-    AConfigProvider: ConfigProvider,
-  },
-  setup() {
-    const store = useStore();
+const store = useMainStore();
 
-    if (sessionStorage.getItem("store")) {
-      store.replaceState(Object.assign({}, store.state, JSON.parse(sessionStorage.getItem("store"))));
-    }
+const storedState = sessionStorage.getItem("store");
+if (storedState) {
+  store.$patch(JSON.parse(storedState));
+}
 
-    window.addEventListener('beforeunload', () => {
-      sessionStorage.setItem("store", JSON.stringify(store.state));
-    });
-
-    return {
-      zhCN,
-      dayjs,
-    };
-  },
+store.$subscribe((_mutation, state) => {
+  sessionStorage.setItem("store", JSON.stringify(state));
 });
 </script>
 

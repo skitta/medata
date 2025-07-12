@@ -17,12 +17,13 @@ This is a medical research data management system (medata) for Kawasaki disease 
 - **Special Features**: Implements optimistic locking for data integrity
 
 ### Frontend (Vue.js)
-- **Framework**: Vue 3 with Composition API
-- **Build Tool**: Vite 5.x
+- **Framework**: Vue 3 with Composition API and TypeScript
+- **Build Tool**: Vite 5.x with TypeScript support
 - **UI Framework**: Ant Design Vue 3
-- **State Management**: Vuex 4
+- **State Management**: Pinia 3 (migrated from Vuex)
 - **Routing**: Vue Router 4 with hash history
 - **Charts**: Uses @antv/g2plot for data visualization
+- **Type Checking**: Full TypeScript integration with vue-tsc
 
 ### Key API Endpoints
 - `/api/kawasaki/patients/` - Patient CRUD operations
@@ -69,6 +70,9 @@ npm run build
 
 # Lint code
 npm run lint
+
+# Type check TypeScript
+npm run type-check
 ```
 
 ### Docker Development

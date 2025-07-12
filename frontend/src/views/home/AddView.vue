@@ -12,33 +12,21 @@
   </div>
 </template>
 
-<script>
-import { defineComponent } from "vue";
-import { Row, Col } from "ant-design-vue";
+<script setup lang="ts">
+import { Row as ARow, Col as ACol } from "ant-design-vue";
 import { onBeforeRouteUpdate, useRouter } from "vue-router";
-import { computed } from "@vue/reactivity";
+import { computed } from "vue";
 
-export default defineComponent({
-  name: "AddView",
-  components: {
-    ARow: Row,
-    ACol: Col,
-  },
+const router = useRouter();
+const colSpan = computed((): number => {
+  return (router.currentRoute.value.meta?.colSpan as number) || 12;
+});
 
-  setup() {
-    const router = useRouter();
-    const colSpan = computed(() => {
-      return router.currentRoute.value.meta.colSpan;
-    });
-    onBeforeRouteUpdate(async (to) => {
-      if (to.name === 'add') {
-        return false;
-      }
-    });
-
-    return {
-      colSpan,
-    };
-  },
+onBeforeRouteUpdate((to) => {
+  if (to.name === 'add') {
+    return false;
+  } else {
+    return true;
+  }
 });
 </script>

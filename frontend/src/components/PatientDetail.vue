@@ -12,36 +12,19 @@
   </a-descriptions>
 </template>
 
-<script>
-import { defineComponent } from "vue";
-import { Descriptions } from "ant-design-vue";
-import { computed } from "@vue/reactivity";
-import { useStore } from "vuex";
+<script setup lang="ts">
+import { computed } from "vue";
+import { Descriptions as ADescriptions, DescriptionsItem as ADescriptionsItem } from "ant-design-vue";
+import { useMainStore } from "@/stores";
+import { Patient } from "@/types/api";
 
-const { Item } = Descriptions;
-
-export default defineComponent({
-  name: "PatientDetail",
-  props: {
-    patient: Object,
-  },
-
-  components: {
-    ADescriptions: Descriptions,
-    ADescriptionsItem: Item,
-  },
-
-  setup(props) {
-    const store = useStore();
-    const groupName = computed(() => store.getters.getGroups.find(item => item.value === props.patient.group)?.label ?? "");
-
-    return {
-      groupName,
-    };
+const props = defineProps({
+  patient: {
+    type: Object as () => Patient,
+    required: true
   }
-})
+});
+
+const store = useMainStore();
+const groupName = computed(() => store.groups.find(item => item.value === props.patient.group)?.label ?? "");
 </script>
-
-<style scoped>
-
-</style>

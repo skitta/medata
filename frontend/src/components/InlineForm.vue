@@ -30,7 +30,7 @@
               </a-col>
               <a-col :span="span" v-else-if="item.type === 'select'">
                 <a-form-item :name="key">
-                  <a-select v-model:value="inputData[key]" :options="item.options" :placeholder="item.label"
+                  <a-select v-model:value="inputData[key]" :options="item.options ?? []" :placeholder="item.label"
                     @change="handleChange"></a-select>
                 </a-form-item>
               </a-col>
@@ -64,161 +64,122 @@
   </div>
 </template>
 
-<script>
-import { defineComponent, reactive, ref, toRaw, watch } from "vue";
-import { Form, DatePicker, Input, InputNumber, Row, Col, Button, Select } from "ant-design-vue";
+<script setup lang="ts">
+import { reactive, ref, toRaw, watch, computed } from "vue";
+import { Form as AForm, DatePicker as ADatePicker, Input as AInput, InputNumber as AInputNumber, Row as ARow, Col as ACol, Button as AButton, Select as ASelect, FormItem as AFormItem } from "ant-design-vue";
 import { MinusCircleOutlined, PlusOutlined, CheckOutlined } from '@ant-design/icons-vue';
-import { useStore } from "vuex";
-import { computed } from "@vue/reactivity";
+import { useMainStore } from "@/stores";
+import { InlineFormField } from "@/types/components";
 
-const { Item } = Form;
 
-export default defineComponent({
-  name: "InlineForm",
-
-  components: {
-    AForm: Form,
-    AFormItem: Item,
-    ADatePicker: DatePicker,
-    AInput: Input,
-    AInputNumber: InputNumber,
-    ARow: Row,
-    ACol: Col,
-    AButton: Button,
-    ASelect: Select,
-    MinusCircleOutlined,
-    PlusOutlined,
-    CheckOutlined
+const props = defineProps({
+  name: {
+    type: String,
+    required: true
   },
-
-  props: {
-    name: {
-      type: String,
-    },
-    label: {
-      type: String,
-    },
-    fields: {
-      type: Object,
-      default: () => ({
-        date: { type: 'date', label: '日期' },
-        wbc: { type: 'number', label: 'WBC' },
-        ne: { type: 'percentage', label: 'NE%' },
-        label: { type: 'string', label: '标签' },
-        gender: { type: 'select', label: '性别', options: [{ value: 'F', label: 'Female' }] },
-        rbc: { type: 'number', label: 'RBC' },
-        plt: { type: 'number', label: 'PLT' }
-      })
-    },
-    span: {
-      type: String,
-      default: "3"
-    }
+  label: {
+    type: String,
+    required: true
   },
-
-  setup(props) {
-    const store = useStore();
-    const dynamicValidateForm = reactive({
-      datas: store.getters.getTestByName(props.name) ?? [],
-    });
-    const showSaveButton = ref(false);
-    const disableSave = ref(true);
-    const disableDelete = computed(() => {
-      return (inputData) => {
-        if (inputData.id !== undefined) {
-          return true;
-        } else {
-          return false;
-        }
-      };
-    });
-
-    // 删除表单项事件
-    const removeDomain = (inputData) => {
-      let index = dynamicValidateForm.datas.indexOf(inputData);
-      if (index !== -1) {
-        dynamicValidateForm.datas.splice(index, 1);
-      }
-    };
-
-    // 添加表单项事件
-    const addDomain = () => {
-      let newdata = {}
-      for (let key in props.fields) {
-        newdata[key] = ''
-      }
-      dynamicValidateForm.datas.push(newdata);
-    };
-
-    // 修改表单项事件
-    const handleChange = () => {
-      showSaveButton.value = true;
-    };
-
-    // 提交表单事件
-    let storedDataLength = store.getters.getTestByName(props.name)?.length ?? 0;
-    const onSave = () => {
-      // 逻辑事件：
-      // 对于一个空 datas，完成了一次表单填写，并点击了保存按钮 => store 保存了键值对数据
-      // 然后删除了该表单，并点击了保存按钮 => store 将保存空键值对数据
-      // 以下条件判断将删除该空键值对数据
-      if (dynamicValidateForm.datas.length === 0) {
-        store.dispatch('delTest', props.name);
-        storedDataLength = 0;
-      } else {
-        store.dispatch('addTests', { name: props.name, data: toRaw(dynamicValidateForm.datas) });
-        storedDataLength = store.getters.getTestByName(props.name).length;
-      }
-      showSaveButton.value = false;
-    };
-
-    // 监听所有表单是否完成，以控制完成状态
-    watch([showSaveButton, disableSave], ([showBtnValue, disabled]) => {
-      if (showBtnValue === false && disabled === false) {
-        dynamicValidateForm.datas.forEach((item) => {
-          if (item.id === undefined) {
-            store.dispatch('addComplete', {
-              name: props.name,
-              data: true
-            });
-          } else {
-            store.dispatch('delComplete', props.name);
-          }
-        })
-      } else {
-        store.dispatch('addComplete', {
-          name: props.name,
-          data: false
-        });
-      }
-    });
-
-    // 监听表单数据是否完整，以控制保存按钮的启用状态
-    watch(dynamicValidateForm.datas, (currentValue) => {
-      showSaveButton.value = (currentValue.length === storedDataLength) ? false : true;
-      currentValue.forEach(item => {
-        for (let key in item) {
-          if (item[key] === '') {
-            disableSave.value = true;
-            return;
-          }
-        }
-        disableSave.value = false;
-      });
-    });
-
-    return {
-      dynamicValidateForm,
-      showSaveButton,
-      removeDomain,
-      addDomain,
-      handleChange,
-      onSave,
-      disableSave,
-      disableDelete
-    };
+  fields: {
+    type: Object as () => InlineFormField,
+  },
+  span: {
+    type: String,
+    default: "3"
   }
-})
+});
+
+const store = useMainStore();
+const dynamicValidateForm = reactive({
+  datas: store.getTestByName(props.name as string) ?? [],
+});
+const showSaveButton = ref(false);
+const disableSave = ref(true);
+const disableDelete = computed(() => {
+  return (inputData: any) => {
+    if (inputData.id !== undefined) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+});
+
+// 删除表单项事件
+const removeDomain = (inputData: any) => {
+  let index = dynamicValidateForm.datas.indexOf(inputData);
+  if (index !== -1) {
+    dynamicValidateForm.datas.splice(index, 1);
+  }
+};
+
+// 添加表单项事件
+const addDomain = () => {
+  let newdata: any = {}
+  for (let key in props.fields) {
+    newdata[key] = ''
+  }
+  dynamicValidateForm.datas.push(newdata);
+};
+
+// 修改表单项事件
+const handleChange = () => {
+  showSaveButton.value = true;
+};
+
+// 提交表单事件
+let storedDataLength: number = store.getTestByName(props.name)?.length ?? 0;
+const onSave = () => {
+  // 逻辑事件：
+  // 对于一个空 datas，完成了一次表单填写，并点击了保存按钮 => store 保存了键值对数据
+  // 然后删除了该表单，并点击了保存按钮 => store 将保存空键值对数据
+  // 以下条件判断将删除该空键值对数据
+  if (dynamicValidateForm.datas.length === 0) {
+    store.delTest(props.name);
+    storedDataLength = 0;
+  } else {
+    store.addTests({ name: props.name, data: toRaw(dynamicValidateForm.datas) });
+    storedDataLength = store.getTestByName(props.name).length;
+  }
+  showSaveButton.value = false;
+};
+
+// 监听所有表单是否完成，以控制完成状态
+watch([showSaveButton, disableSave], ([showBtnValue, disabled]: [boolean, boolean]) => {
+  if (showBtnValue === false && disabled === false) {
+    dynamicValidateForm.datas.forEach((item:any
+    ) => {
+      if (item.id === undefined) {
+        store.addComplete({
+          name: props.name,
+          data: true
+        });
+      } else {
+        store.delComplete(props.name);
+      }
+    })
+  } else {
+    store.addComplete({
+      name: props.name,
+      data: false
+    });
+  }
+});
+
+// 监听表单数据是否完整，以控制保存按钮的启用状态
+watch(dynamicValidateForm.datas, (currentValue: any[]) => {
+  showSaveButton.value = (currentValue.length === storedDataLength) ? false : true;
+  currentValue.forEach(item => {
+    for (let key in item) {
+      if (item[key] === '') {
+        disableSave.value = true;
+        return;
+      }
+    }
+    disableSave.value = false;
+  });
+});
 </script>
 
 <style scoped>

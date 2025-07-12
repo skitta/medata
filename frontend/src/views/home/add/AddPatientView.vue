@@ -9,45 +9,44 @@
       @close="clearError"
       style="margin-bottom: 16px"
     />
-    <a-form name="Patient" ref="formRef" :model="formState" :rules="rules" :label-col="{ span: 4 }"
-      :wrapper-col="{ span: 18 }">
-      <a-form-item label="登记号" name="registered_ID">
+    <a-form name="Patient" ref="formRef" :model="formState" :rules="rules" v-bind="layout">
+      <a-form-item has-feedback label="登记号" name="registered_ID">
         <a-input v-model:value="formState.registered_ID" />
       </a-form-item>
       <a-form-item label="住院号" name="document_ID">
         <a-input v-model:value="formState.document_ID" />
       </a-form-item>
-      <a-form-item label="姓名" name="full_name">
+      <a-form-item has-feedback label="姓名" name="full_name">
         <a-input v-model:value="formState.full_name" />
       </a-form-item>
-      <a-form-item label="性别" name="gender">
+      <a-form-item has-feedback label="性别" name="gender">
         <a-select v-model:value="formState.gender">
           <a-select-option value="M">男</a-select-option>
           <a-select-option value="F">女</a-select-option>
         </a-select>
       </a-form-item>
-      <a-form-item label="年龄(月)" name="age">
+      <a-form-item has-feedback label="年龄(月)" name="age">
         <a-input-number v-model:value="formState.age" style="width: 100%" />
       </a-form-item>
-      <a-form-item label="入院日期" name="in_date">
+      <a-form-item has-feedback label="入院日期" name="in_date">
         <a-date-picker v-model:value="formState.in_date" value-format="YYYY-MM-DD" style="width: 100%" />
       </a-form-item>
-      <a-form-item label="身高(cm)" name="height">
+      <a-form-item has-feedback label="身高(cm)" name="height">
         <a-input-number v-model:value="formState.height" style="width: 100%" />
       </a-form-item>
-      <a-form-item label="体重(kg)" name="weight">
+      <a-form-item has-feedback label="体重(kg)" name="weight">
         <a-input-number v-model:value="formState.weight" style="width: 100%" />
       </a-form-item>
-      <a-form-item label="分组" v-model:value="formState.group" name="group">
+      <a-form-item has-feedback label="分组" name="group">
         <a-select v-model:value="formState.group" :options="groupOptions"></a-select>
       </a-form-item>
-      <a-form-item label="IVIG 抵抗" v-model:value="formState.resistance" name="resistance">
+      <a-form-item label="IVIG 抵抗" name="resistance">
         <a-radio-group v-model:value="formState.resistance">
           <a-radio :value="true">是</a-radio>
           <a-radio :value="false">否</a-radio>
         </a-radio-group>
       </a-form-item>
-      <a-form-item label="复发病历" v-model:value="formState.relapse" name="relapse">
+      <a-form-item label="复发病历" name="relapse">
         <a-radio-group v-model:value="formState.relapse">
           <a-radio :value="true">是</a-radio>
           <a-radio :value="false">否</a-radio>
@@ -57,220 +56,135 @@
         <a-button type="primary" @click="showModal">确认</a-button>
       </a-form-item>
     </a-form>
-    <a-modal v-model:visible="modalVisible" title="确认信息" @ok="handleOk" :confirm-loading="confireLoading">
+    <a-modal v-model:open="modalVisible" title="确认信息" @ok="handleOk" :confirm-loading="confireLoading">
       <p>{{ modalMsg }}</p>
     </a-modal>
   </a-card>
 </template>
 
-<script>
-import { defineComponent, ref, reactive, toRaw, onMounted } from "vue";
+<script setup lang="ts">
+import { ref, reactive, toRaw, onMounted } from "vue";
 import {
-  Card, Form, Input, Select, DatePicker, InputNumber, Button, Modal, Radio, Alert
+  Card as ACard, Form as AForm, Input as AInput, Select as ASelect, DatePicker as ADatePicker, InputNumber as AInputNumber, Button as AButton, Modal as AModal, Radio as ARadio, Alert as AAlert, SelectOption as ASelectOption, RadioGroup as ARadioGroup, FormItem as AFormItem
 } from "ant-design-vue";
-import { useStore } from "vuex";
-import { getGroups, getPatients, getTestsByPatientId, addPatient } from "../../../api/kawasaki";
+import { useMainStore } from "@/stores";
+import { getGroups, getPatients, getTestsByPatientId, addPatient } from "@/api/kawasaki";
 import { useRouter } from "vue-router";
+import type { Patient, SelectOption } from "@/types/api";
+import type { Rule } from 'ant-design-vue/es/form';
+import type { FormInstance } from 'ant-design-vue';
+import { useErrorHandler } from "@/composables/useErrorHandler";
+import { useFormValidation } from "@/composables/useFormValidation";
 
-const { Item } = Form;
-const { Option } = Select;
-const { Group } = Radio;
+const formRef = ref<FormInstance | undefined>();
+const { errorMessage, clearError, handleError } = useErrorHandler();
+const { createRequiredRule, createNumberRule, createAsyncValidationRule } = useFormValidation();
+const formState = reactive<Patient>({
+  registered_ID: "",
+  document_ID: "",
+  full_name: "",
+  gender: "",
+  age: 0,
+  in_date: "",
+  height: 0,
+  weight: 0,
+  resistance: false,
+  relapse: false,
+});
+const groupOptions = ref<SelectOption[]>([]);
+onMounted(async () => {
+  groupOptions.value = await getGroups();
+});
 
-export default defineComponent({
-  name: "AddPatientView",
-  components: {
-    ACard: Card,
-    AForm: Form,
-    AFormItem: Item,
-    AInput: Input,
-    ASelect: Select,
-    ASelectOption: Option,
-    ADatePicker: DatePicker,
-    AInputNumber: InputNumber,
-    AButton: Button,
-    AModal: Modal,
-    ARadioGroup: Group,
-    ARadio: Radio,
-    AAlert: Alert,
+const modalVisible = ref(false);
+const modalMsg = ref("");
+const confireLoading = ref(false);
+
+
+// 验证登记号是否已存在
+let existPatient: Patient | null = null;
+const checkRegisteredID = createAsyncValidationRule(
+  async (value: string) => {
+    const data = await getPatients({ search: value });
+    if (data.count > 0) {
+      existPatient = data.results[0];
+      modalMsg.value = "登记号已存在，是否直接加载？";
+      modalVisible.value = true;
+      return false;
+    } else {
+      existPatient = null;
+      modalMsg.value = "";
+      modalVisible.value = false;
+      clearError();
+      return true;
+    }
   },
+  "登记号已存在"
+);
 
-  setup() {
-    const formRef = ref();
-    const errorMessage = ref("");
-    const formState = reactive({
-      registered_ID: "",
-      document_ID: "",
-      full_name: "",
-      gender: "",
-      age: undefined,
-      in_date: undefined,
-      height: undefined,
-      weight: undefined,
-      group: "",
-      resistance: false,
-      relapse: false
+const rules: Record<string, Rule[]> = {
+  registered_ID: [checkRegisteredID],
+  full_name: [createRequiredRule("请输入姓名")],
+  gender: [createRequiredRule("请选择性别")],
+  age: [createNumberRule("年龄")],
+  in_date: [createRequiredRule("请选择日期")],
+  height: [createNumberRule("身高", 0)],
+  weight: [createNumberRule("体重", 0)],
+  group: [createRequiredRule("请选择分组")],
+};
+
+const layout = {
+  labelCol: { span: 4 },
+  wrapperCol: { span: 18 },
+};
+
+const showModal = () => {
+  formRef.value
+    ?.validate()
+    .then(() => {
+      modalMsg.value = "确认后部分字段将无法更改，是否确认？";
+      modalVisible.value = true;
+    })
+    .catch(error => {
+      console.log(error);
     });
-    const groupOptions = ref([]);
-    onMounted(async () => {
-      groupOptions.value = await getGroups();
-    });
+}
 
-    const modalVisible = ref(false);
-    const modalMsg = ref("");
-    const confireLoading = ref(false);
+const store = useMainStore();
+const router = useRouter();
 
-    const clearError = () => {
-      errorMessage.value = "";
-    };
-
-    const handleError = (error) => {
-      console.error(error);
-      if (error.response && error.response.status === 409) {
-        errorMessage.value = "数据冲突：其他用户可能已修改此数据，请刷新页面重试";
-      } else if (error.response && error.response.data && error.response.data.detail) {
-        errorMessage.value = error.response.data.detail;
-      } else if (error.response && error.response.data) {
-        // 处理字段验证错误
-        const errors = error.response.data;
-        const errorMessages = [];
-        for (const field in errors) {
-          if (Array.isArray(errors[field])) {
-            errorMessages.push(`${field}: ${errors[field].join(', ')}`);
-          } else {
-            errorMessages.push(`${field}: ${errors[field]}`);
-          }
-        }
-        errorMessage.value = errorMessages.join('; ');
-      } else {
-        errorMessage.value = error.message || "操作失败，请重试";
-      }
-    };
-
-    let checkAge = async (rule, value) => {
-      if (!value) {
-        return Promise.reject("请输入年龄");
-      }
-      if (!Number.isInteger(value)) {
-        return Promise.reject("年龄必须为整数");
-      } else if (value < 0) {
-        return Promise.reject("年龄不能小于0");
-      } else {
-        return Promise.resolve();
-      }
-    };
-
-    let checkHeightAndWeight = async (rule, value) => {
-      if (!value) {
-        return Promise.reject("请输入数字");
-      }
-      if (value < 0) {
-        return Promise.reject("不能小于0");
-      }
-      return Promise.resolve();
-    };
-
-    //TODO: 检索登记号是否已存在
-    let existPatient = {};
-    const checkRegisteredID = async (rule, value) => {
-      if (!value) {
-        return Promise.reject("请输入登记号");
-      }
-      try {
-        const data = await getPatients({ search: value });
-        if (data.count > 0) {
-          existPatient = data.results[0];
-          modalMsg.value = "登记号已存在，是否直接加载？";
-          modalVisible.value = true;
-          return Promise.reject("登记号已存在");
-        } else {
-          existPatient = {};
-          modalMsg.value = "";
-          modalVisible.value = false;
-          clearError(); // 清除之前的错误
-          return Promise.resolve();
-        }
-      } catch (error) {
+const handleOk = () => {
+  confireLoading.value = true;
+  clearError(); // 清除之前的错误
+  
+  if (existPatient && Object.keys(existPatient).length > 0) {
+    // 如果数据库中存在该患者，则获取该患者的所有临床数据
+    getTestsByPatientId(existPatient.id!)
+      .then(data => {
+        store.setTests(data);
+        store.setPatient(existPatient!);
+        confireLoading.value = false;
+        modalVisible.value = false;
+        router.push({ name: "add-tests" });
+      }).catch(error => {
+        confireLoading.value = false;
+        modalVisible.value = false;
         handleError(error);
-        return Promise.reject("检索登记号失败");
-      }
-    };
-
-    const rules = {
-      registered_ID: [{ required: true, validator: checkRegisteredID, trigger: "blur" }],
-      // document_ID: [{ required: true, message: "请输入住院号", trigger: "blur" }],
-      full_name: [{ required: true, message: "请输入姓名", trigger: "blur" }],
-      gender: [{ required: true, message: "请选择性别", trigger: "blur" }],
-      age: [{ required: true, validator: checkAge, trigger: "blur" }],
-      in_date: [{ required: true, message: "请选择日期", trigger: "blur" }],
-      height: [{ required: true, validator: checkHeightAndWeight, trigger: "blur" }],
-      weight: [{ required: true, validator: checkHeightAndWeight, trigger: "blur" }],
-      group: [{ required: true, message: "请选择分组", trigger: "blur" }],
-      status: [{ required: true, message: "请选择状态", trigger: "blur" }],
-    };
-
-    const showModal = () => {
-      formRef.value
-        .validate()
-        .then(() => {
-          modalMsg.value = "确认后部分字段将无法更改，是否确认？";
-          modalVisible.value = true;
-        })
-        .catch(error => {
-          console.log(error);
-        });
-    }
-
-    const store = useStore();
-    const router = useRouter();
-
-    const handleOk = () => {
-      confireLoading.value = true;
-      clearError(); // 清除之前的错误
-      
-      if (Object.keys(existPatient).length > 0) {
-        // 如果数据库中存在该患者，则获取该患者的所有临床数据
-        getTestsByPatientId(existPatient.id)
-          .then(data => {
-            store.dispatch("setTests", data);
-            store.dispatch("setPatient", existPatient);
-            confireLoading.value = false;
-            modalVisible.value = false;
-            router.push({ name: "add-tests" });
-          }).catch(error => {
-            confireLoading.value = false;
-            modalVisible.value = false;
-            handleError(error);
-          });
-      } else {
-        // 否则提交新患者至数据库
-        addPatient(toRaw(formState))
-          .then(data => {
-            store.dispatch("setPatient", data);
-            store.dispatch("setTests", {});
-            confireLoading.value = false;
-            modalVisible.value = false;
-            router.push({ name: "add-tests" });
-          }).catch(error => {
-            confireLoading.value = false;
-            modalVisible.value = false;
-            handleError(error);
-          });
-      }
-    }
-
-    return {
-      formRef,
-      formState,
-      groupOptions,
-      modalVisible,
-      modalMsg,
-      confireLoading,
-      errorMessage,
-      rules,
-      showModal,
-      handleOk,
-      clearError,
-    };
+      });
+  } else {
+    // 否则提交新患者至数据库
+    addPatient(toRaw(formState))
+      .then(data => {
+        store.setPatient(data);
+        store.setTests({});
+        confireLoading.value = false;
+        modalVisible.value = false;
+        router.push({ name: "add-tests" });
+      }).catch(error => {
+        confireLoading.value = false;
+        modalVisible.value = false;
+        handleError(error);
+      });
   }
-})
+}
 </script>

@@ -7,7 +7,7 @@
           <a-card :loading="sampleCountsLoading">
             样本量
             <a-row>
-              <a-col v-for="(value, key) in sampleCounts" :key="key" :span="24 / groups.length">
+              <a-col v-for="(value, key) in summary.sample_counts" :key="key" :span="summary.groups && summary.groups.length ? 24 / summary.groups.length : 24">
                 <a-statistic :title="key" :value="value" suffix="人"></a-statistic>
               </a-col>
             </a-row>
@@ -17,7 +17,7 @@
           <a-card :loading="genderRateLoading">
             性别比例 (男:女)
             <a-row>
-              <a-col v-for="(item, key) in genderCounts" :key="key" :span="24 / groups.length">
+              <a-col v-for="(item, key) in summary.gender_counts" :key="key" :span="summary.groups && summary.groups.length ? 24 / summary.groups.length : 24">
                 <a-statistic :title="key" :value="(item.M / item.F).toFixed(2)"></a-statistic>
               </a-col>
             </a-row>
@@ -27,7 +27,7 @@
           <a-card :loading="ageLoading">
             平均年龄
             <a-row>
-              <a-col v-for="(value, key) in ageAverage" :key="key" :span="24 / groups.length">
+              <a-col v-for="(value, key) in summary.age_mean" :key="key" :span="summary.groups && summary.groups.length ? 24 / summary.groups.length : 24">
                 <a-statistic :title="key" :value="(value / 12).toFixed(2)" suffix="岁"></a-statistic>
               </a-col>
             </a-row>
@@ -44,7 +44,7 @@
       </a-row>
       <!-- 柱状图 -->
       <a-row :gutter="16">
-        <a-col v-for="g in groups" :key="g" :xs="24" :lg="24 / groups.length">
+        <a-col v-for="g in summary.groups" :key="g" :xs="24" :lg="summary.groups && summary.groups.length ? 24 / summary.groups.length : 24">
           <a-card :title="`年龄分布(${g})`">
             <div :id="`age_hist_${g.replaceAll(' ', '_')}`"></div>
           </a-card>
@@ -54,125 +54,107 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 import {
-  defineComponent,
   onMounted,
-  reactive,
-  toRefs,
-  nextTick
+  nextTick,
+  ref,
 } from "vue";
-import { Line, Histogram } from "@antv/g2plot";
-import { Row, Col, Card, Statistic, Space } from "ant-design-vue";
-import { getSummary, getCountByMonth, getAgeByGroup } from "../../api/kawasaki";
+import { Row as ARow, Col as ACol, Card as ACard, Statistic as AStatistic, Space as ASpace } from "ant-design-vue";
+import { getSummary, getCountByMonth, getAgeByGroup } from "@/api/kawasaki";
+import type { Summary, MonthlyCount, AgeDataByGroup } from "@/types/api";
 
-export default defineComponent({
-  name: "DashboardView",
-  components: {
-    ARow: Row,
-    ACol: Col,
-    ACard: Card,
-    AStatistic: Statistic,
-    ASpace: Space
-  },
-  setup() {
-    const state = reactive({
-      sampleCounts: {},
-      sampleCountsLoading: true,
-      groups: [],
-      genderCounts: {},
-      genderRateLoading: true,
-      ageAverage: {},
-      ageLoading: true,
-      linePlotLoading: true,
-      histPlotLoading: true,
-    });
+const summary = ref<Summary>({
+  sample_counts: {},
+  groups: [],
+  gender_counts: {},
+  age_mean: {},
+});
+const sampleCountsLoading = ref<boolean>(true);
+const genderRateLoading = ref<boolean>(true);
+const ageLoading = ref<boolean>(true);
+const linePlotLoading = ref<boolean>(true);
+const histPlotLoading = ref<boolean>(true);
 
-    const getData = async () => {
-      const data = await getSummary();
-      state.sampleCounts = data.sample_counts;
-      state.sampleCountsLoading = false;
-      state.groups = data.groups;
-      state.genderCounts = data.gender_counts;
-      state.genderRateLoading = false;
-      state.ageAverage = data.age_mean;
-      state.ageLoading = false;
-    };
+const getData = async (): Promise<void> => {
+  summary.value = await getSummary();
+  sampleCountsLoading.value = false;
+  genderRateLoading.value = false;
+  ageLoading.value = false;
+};
 
-    const setLinePlot = async () => {
-      const data = await getCountByMonth();
-      state.linePlotLoading = false;
-      if (data !== null && data.length !== 0) {
-        nextTick(() => {
-          const line = new Line("count_line", {
-            data: data,
-            xField: "date",
-            yField: "count",
-            smooth: true,
-            meta: {
-              date: {
-                alias: "日期",
-              },
-              count: {
-                alias: "样本量",
-              },
+const setLinePlot = async (): Promise<void> => {
+  const data: MonthlyCount[] = await getCountByMonth();
+  linePlotLoading.value = false;
+  if (data !== null && data.length !== 0) {
+    nextTick(async () => {
+      // 动态导入图表库
+      const { Line } = await import("@antv/g2plot");
+      const line = new Line("count_line", {
+        data: data,
+        xField: "date",
+        yField: "count",
+        smooth: true,
+        meta: {
+          date: {
+            alias: "日期",
+          },
+          count: {
+            alias: "样本量",
+          },
+        },
+      });
+      line.render();
+    })
+  }
+};
+
+const setHistPlot = async (): Promise<void> => {
+  const data: AgeDataByGroup = await getAgeByGroup();
+  histPlotLoading.value = false;
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== null && value.length !== 0) {
+      nextTick(async () => {
+        // 动态导入图表库
+        const { Histogram } = await import("@antv/g2plot");
+        const hist_id = `age_hist_${key.replaceAll(" ", "_")}`;
+        const hist = new Histogram(hist_id, {
+          data: value,
+          binField: "value",
+          binWidth: 1,
+          tooltip: {
+            showMarkers: false,
+            position: "top",
+          },
+          interactions: [
+            {
+              type: "element-highlight",
             },
-          });
-          line.render();
-        })
-      }
-    };
+          ],
+          meta: {
+            range: {
+              min: 0,
+              tickInterval: 1,
+              alias: "年龄段",
+            },
+            count: {
+              max: 10,
+              tickInterval: 2,
+              nice: true,
+              alias: "样本量",
+            },
+          },
+        });
+        hist.render();
+      })
+    }
+  }
+};
 
-    const setHistPlot = async () => {
-      const data = await getAgeByGroup();
-      state.histPlotLoading = false;
-      for (const [key, value] of Object.entries(data)) {
-        if (value !== null && value.length !== 0) {
-          nextTick(() => {
-            const hist_id = `age_hist_${key.replaceAll(" ", "_")}`;
-            const hist = new Histogram(hist_id, {
-              data: value,
-              binField: "value",
-              binWidth: 1,
-              tooltip: {
-                showMarkers: false,
-                position: "top",
-              },
-              interactions: [
-                {
-                  type: "element-highlight",
-                },
-              ],
-              meta: {
-                range: {
-                  min: 0,
-                  tickInterval: 1,
-                  alias: "年龄段",
-                },
-                count: {
-                  max: 10,
-                  tickInterval: 2,
-                  nice: true,
-                  alias: "样本量",
-                },
-              },
-            });
-            hist.render();
-          })
-        }
-      }
-    };
-
-    onMounted(async () => {
-      await getData();
-      setLinePlot();
-      setHistPlot();
-    });
-
-    return {
-      ...toRefs(state),
-    };
-  },
+onMounted(async () => {
+  await getData();
+  setLinePlot();
+  setHistPlot();
 });
 </script>
 
@@ -188,5 +170,4 @@ export default defineComponent({
     margin: 20px 10px;
   }
 }
-
 </style>
