@@ -8,7 +8,6 @@
 # project
 *.sqlite3
 **/__pycache__
-/static
 
 # node
 **/node_modules
