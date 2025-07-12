@@ -43,6 +43,9 @@ export default createStore({
     addComplete(state, complete) {
       state.complete[complete.name] = complete.data
     },
+    delComplete(state, name) {
+      delete state.complete[name]
+    },
   },
 
   actions: {
@@ -69,6 +72,9 @@ export default createStore({
     },
     addComplete({ commit }, complete) {
       commit('addComplete', complete)
+    },
+    delComplete({ commit }, name) {
+      commit('delComplete', name)
     },
   },
 })

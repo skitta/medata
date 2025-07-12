@@ -1,6 +1,15 @@
 <template>
   <div class="nav-view-container">
     <a-space direction="vertical" style="width: 100%">
+      <a-alert
+        v-if="alertMessage"
+        :message="alertMessage"
+        :type="alertType"
+        show-icon
+        closable
+        @close="clearAlert"
+        style="margin-bottom: 16px"
+      />
       <a-row justify="space-between">
         <a-col :xs="12" :md="6" :lg="6" :xl="4">
           <a-input placeholder="搜索" :allow-clear="true" @press-enter="onSearch" @change="onSearch">
@@ -17,7 +26,7 @@
                 <a-menu-item key="2">所选数据</a-menu-item>
               </a-menu>
             </template>
-            <a-button type="primary">
+            <a-button type="primary" :loading="exportLoading">
               <download-outlined />
               导出
             </a-button>
@@ -52,10 +61,10 @@
 
 <script>
 import { defineComponent, onMounted, ref, watch } from "vue";
-import { Table, Tag, Input, Row, Col, Space, Button, Dropdown, Menu, message } from "ant-design-vue";
+import { Table, Tag, Input, Row, Col, Space, Button, Dropdown, Menu, Alert } from "ant-design-vue";
 import { usePagination } from 'vue-request'
 import { computed } from "@vue/reactivity";
-import { getGroups, getPatients, getTestsByPatientId, getExportFile } from "@/api/kawasaki";
+import { getGroups, getPatients, getTestsByPatientId, getExportFile } from "../../api/kawasaki";
 import { SearchOutlined, DownloadOutlined } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
@@ -75,12 +84,26 @@ export default defineComponent({
     ADropdown: Dropdown,
     AMenu: Menu,
     AMenuItem: Item,
+    AAlert: Alert,
     SearchOutlined,
     DownloadOutlined
   },
 
   setup() {
     const groupList = ref([]);
+    const alertMessage = ref("");
+    const alertType = ref("info");
+    const exportLoading = ref(false);
+    
+    const clearAlert = () => {
+      alertMessage.value = "";
+    };
+    
+    const showAlert = (message, type = "info") => {
+      alertMessage.value = message;
+      alertType.value = type;
+    };
+    
     onMounted(async () => {
       groupList.value = await getGroups();
     });
@@ -202,25 +225,18 @@ export default defineComponent({
       }
     }
 
-    const downloadMsgKey = "download";
-
     const handleExport = (e) => {
       if (e.key === "1") {
-        message.loading({
-          content: "正在导出...",
-          key: downloadMsgKey,
-        });
+        exportLoading.value = true;
+        clearAlert(); // 清除之前的提示
+        
         getExportFile().then(() => {
-          message.success({
-            content: "导出成功",
-            key: downloadMsgKey,
-          });
+          exportLoading.value = false;
+          showAlert("导出成功！文件已开始下载", "success");
         }).catch(err => {
-          message.error({
-            content: "导出失败",
-            key: downloadMsgKey,
-          });
-          console.log(err);
+          exportLoading.value = false;
+          console.error("导出失败", err);
+          showAlert("导出失败，请重试", "error");
         });
       }
     }
@@ -240,6 +256,10 @@ export default defineComponent({
       onSearch,
       gotoAdd,
       handleExport,
+      alertMessage,
+      alertType,
+      exportLoading,
+      clearAlert,
     };
   }
 })

@@ -1,24 +1,44 @@
+from calendar import c
 import numpy as np
 import pandas as pd
 import zipfile
 
 from django.http import Http404, HttpResponse, FileResponse
 
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.core.exceptions import ValidationError
 from rest_framework.decorators import action
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Patient, Echocardiography, BloodTest, LiverFunction, EnrollGroup, OtherTest, Samples
+from .models import Patient, Echocardiography, BloodTest, LiverFunction, EnrollGroup, InfectiousTest, Samples, CustomTest
 from .serializers import PatientSerializer, BloodTestSerializer, LiverFunctionSerializer, EchocardiographySerializer,\
-    EnrollGroupSerializer, OtherTestSerializer, SamplesSerializer
+    EnrollGroupSerializer, InfectiousTestSerializer, SamplesSerializer, CustomTestSerializer
 from .resource import PatientResource, BloodTestResource, LiverFunctionResource, EchocardiographyResource, \
-    OtherTestResource, SamplesResource
+    InfectiousTestResource, SamplesResource, CustomTestResource
 
 
-class PatientViewSet(viewsets.ModelViewSet):
+class OptimisticLockingViewSet(viewsets.ModelViewSet):
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            self.perform_update(serializer)
+        except ValidationError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_409_CONFLICT)
+
+        # Return the updated instance with new version
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+
+class PatientViewSet(OptimisticLockingViewSet):
     queryset = Patient.objects.all().order_by('id')
     serializer_class = PatientSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
@@ -40,7 +60,26 @@ class PatientViewSet(viewsets.ModelViewSet):
         return response
 
 
-class BloodTestViewSet(viewsets.ModelViewSet):
+class CustomTestViewSet(OptimisticLockingViewSet):
+    queryset = CustomTest.objects.all()
+    serializer_class = CustomTestSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'patient': ['exact', 'in'],
+    }
+
+    @action(detail=False, methods=['get'])
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        dataset = CustomTestResource().export(queryset)
+        response = HttpResponse(dataset.csv, headers={
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename="customTests.csv"'
+        })
+        return response
+
+
+class BloodTestViewSet(OptimisticLockingViewSet):
     queryset = BloodTest.objects.all()
     serializer_class = BloodTestSerializer
     filter_backends = [DjangoFilterBackend]
@@ -59,7 +98,7 @@ class BloodTestViewSet(viewsets.ModelViewSet):
         return response
 
 
-class LiverFunctionViewSet(viewsets.ModelViewSet):
+class LiverFunctionViewSet(OptimisticLockingViewSet):
     queryset = LiverFunction.objects.all()
     serializer_class = LiverFunctionSerializer
     filter_backends = [DjangoFilterBackend]
@@ -78,7 +117,7 @@ class LiverFunctionViewSet(viewsets.ModelViewSet):
         return response
 
 
-class EchocardiographyViewSet(viewsets.ModelViewSet):
+class EchocardiographyViewSet(OptimisticLockingViewSet):
     queryset = Echocardiography.objects.all()
     serializer_class = EchocardiographySerializer
     filter_backends = [DjangoFilterBackend]
@@ -97,9 +136,9 @@ class EchocardiographyViewSet(viewsets.ModelViewSet):
         return response
 
 
-class OtherTestViewSet(viewsets.ModelViewSet):
-    queryset = OtherTest.objects.all()
-    serializer_class = OtherTestSerializer
+class InfectiousTestViewSet(OptimisticLockingViewSet):
+    queryset = InfectiousTest.objects.all()
+    serializer_class = InfectiousTestSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
         'patient': ['exact', 'in'],
@@ -108,7 +147,7 @@ class OtherTestViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def export(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        dataset = OtherTestResource().export(queryset)
+        dataset = InfectiousTestResource().export(queryset)
         response = HttpResponse(dataset.csv, headers={
             'Content-Type': 'text/csv',
             'Content-Disposition': 'attachment; filename="others.csv"'
@@ -116,7 +155,7 @@ class OtherTestViewSet(viewsets.ModelViewSet):
         return response
 
 
-class SamplesViewSet(viewsets.ModelViewSet):
+class SamplesViewSet(OptimisticLockingViewSet):
     queryset = Samples.objects.all()
     serializer_class = SamplesSerializer
     filter_backends = [DjangoFilterBackend]
@@ -224,14 +263,16 @@ class GetAllTestsByPatientIDView(APIView):
         blood_test = BloodTest.objects.filter(patient=patient).all()
         liver_function = LiverFunction.objects.filter(patient=patient).all()
         echocardiography = Echocardiography.objects.filter(patient=patient).all()
-        other_test = OtherTest.objects.filter(patient=patient).all()
+        infectious_test = InfectiousTest.objects.filter(patient=patient).all()
         samples = Samples.objects.filter(patient=patient).all()
+        custom_tests = CustomTest.objects.filter(patient=patient).all()
         context = {
             'bloodTests': [BloodTestSerializer(bt).data for bt in blood_test],
             'liverFunction': [LiverFunctionSerializer(lf).data for lf in liver_function],
             'echocardiography': [EchocardiographySerializer(e).data for e in echocardiography],
-            'otherTests': [OtherTestSerializer(ot).data for ot in other_test],
-            'samples': [SamplesSerializer(s).data for s in samples]
+            'infectiousTests': [InfectiousTestSerializer(ot).data for ot in infectious_test],
+            'samples': [SamplesSerializer(s).data for s in samples],
+            'customTests': [CustomTestSerializer(ct).data for ct in custom_tests]
         }
         for key in list(context.keys()):
             if not context.get(key):
@@ -249,7 +290,8 @@ class ExportAllView(APIView):
         blood_tests = BloodTestResource().export()
         liver_function = LiverFunctionResource().export()
         cardiography = EchocardiographyResource().export()
-        other_tests = OtherTestResource().export()
+        infectious_test = InfectiousTestResource().export()
+        custom_tests = CustomTestResource().export()
         samples = SamplesResource().export()
 
         with zipfile.ZipFile('/tmp/exported.zip', 'w') as zf:
@@ -257,7 +299,8 @@ class ExportAllView(APIView):
             zf.writestr('blood_test.csv', blood_tests.csv)
             zf.writestr('liver_function.csv', liver_function.csv)
             zf.writestr('cardiography.csv', cardiography.csv)
-            zf.writestr('other_test.csv', other_tests.csv)
+            zf.writestr('infectious_test.csv', infectious_test.csv)
+            zf.writestr('custom_tests.csv', custom_tests.csv)
             zf.writestr('samples.csv', samples.csv)
 
         response = FileResponse(open('/tmp/exported.zip', 'rb'), as_attachment=True)

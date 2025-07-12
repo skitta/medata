@@ -30,7 +30,6 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 WORKDIR /medata
 
 COPY --chown=django:django manage.py /medata/
-COPY --chown=django:django db.sqlite3 /medata/
 COPY --chown=django:django medata /medata/medata
 COPY --chown=django:django apps /medata/apps
 COPY --chown=django:django frontend/dist /medata/frontend/dist

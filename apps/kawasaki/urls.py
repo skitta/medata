@@ -9,7 +9,8 @@ routers.register(r'bloodTests', views.BloodTestViewSet)
 routers.register(r'liverFunction', views.LiverFunctionViewSet)
 routers.register(r'echocardiography', views.EchocardiographyViewSet)
 routers.register(r'enrollGroups', views.EnrollGroupViewSet)
-routers.register(r'otherTests', views.OtherTestViewSet)
+routers.register(r'infectiousTests', views.InfectiousTestViewSet)
+routers.register(r'customTests', views.CustomTestViewSet)
 routers.register(r'samples', views.SamplesViewSet)
 
 urlpatterns = [

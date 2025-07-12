@@ -20,21 +20,33 @@
     </template>
 
     <a-space direction="vertical" style="width: 100%">
+      <a-alert
+        v-if="errorMessage"
+        :message="errorMessage"
+        type="error"
+        show-icon
+        closable
+        @close="clearError"
+        style="margin-bottom: 16px"
+      />
       <a-patient-detail :patient="patient" />
       <a-collapse v-model:activeKey="activeKey" ghost>
         <a-collapse-panel key="1" header="血常规">
           <a-inline-form name="bloodTests" label="血常规" :fields="bloodTest" />
         </a-collapse-panel>
         <a-collapse-panel key="2" header="肝功能">
-          <a-inline-form name="liverFunction" label="肝功能" :fields="liverFunction" span="6" />
+          <a-inline-form name="liverFunction" label="肝功能" :fields="liverFunction" />
         </a-collapse-panel>
         <a-collapse-panel key="3" header="心脏彩超">
           <a-inline-form name="echocardiography" label="心脏彩超" :fields="echocardiography" span="4" />
         </a-collapse-panel>
-        <a-collapse-panel key="4" header="其他辅助检查">
-          <a-inline-form name="otherTests" label="其他辅助检查" :fields="otherTest" span="9" />
+        <a-collapse-panel key="4" header="感染性指标">
+          <a-inline-form name="infectiousTests" label="感染性指标" :fields="infectiousTest" span="9" />
         </a-collapse-panel>
-        <a-collapse-panel key="5" header="样本信息">
+        <a-collapse-panel key="5" header="其他辅助检查">
+          <a-inline-form name="customTests" label="其他辅助检查" :fields="customTest" span="4" />
+        </a-collapse-panel>
+        <a-collapse-panel key="6" header="样本信息">
           <a-inline-form name="samples" label="标本" :fields="samples" span="4" />
         </a-collapse-panel>
       </a-collapse>
@@ -61,11 +73,11 @@
 
 <script>
 import { defineComponent, defineAsyncComponent, toRefs, reactive, ref, toRaw } from "vue";
-import { PageHeader, Space, Collapse, Button, Tooltip, Modal, Tag, Form, Radio, message } from "ant-design-vue";
+import { PageHeader, Space, Collapse, Button, Tooltip, Modal, Tag, Form, Radio, Alert } from "ant-design-vue";
 import { useStore } from "vuex";
 import { computed } from "@vue/reactivity";
 import { EditOutlined, CheckOutlined } from "@ant-design/icons-vue";
-import { updatePatient, updateTestByName, addTestByName } from "@/api/kawasaki";
+import { updatePatient, updateTestByName, addTestByName } from "../../../api/kawasaki";
 import { useRouter } from "vue-router";
 
 const { Item } = Form;
@@ -87,18 +99,48 @@ export default defineComponent({
     AFormItem: Item,
     ARadioGroup: Group,
     ARadio: Radio,
+    AAlert: Alert,
     EditOutlined,
     CheckOutlined,
     APatientDetail: defineAsyncComponent(() =>
-      import("@/components/PatientDetail.vue")
+      import("../../../components/PatientDetail.vue")
     ),
     AInlineForm: defineAsyncComponent(() =>
-      import("@/components/InlineForm.vue")
+      import("../../../components/InlineForm.vue")
     ),
   },
 
   setup() {
     const store = useStore();
+    const errorMessage = ref("");
+    
+    const clearError = () => {
+      errorMessage.value = "";
+    };
+
+    const handleError = (error) => {
+      console.error(error);
+      if (error.response && error.response.status === 409) {
+        errorMessage.value = "数据冲突：其他用户可能已修改此数据，请刷新页面重试";
+      } else if (error.response && error.response.data && error.response.data.detail) {
+        errorMessage.value = error.response.data.detail;
+      } else if (error.response && error.response.data) {
+        // 处理字段验证错误
+        const errors = error.response.data;
+        const errorMessages = [];
+        for (const field in errors) {
+          if (Array.isArray(errors[field])) {
+            errorMessages.push(`${field}: ${errors[field].join(', ')}`);
+          } else {
+            errorMessages.push(`${field}: ${errors[field]}`);
+          }
+        }
+        errorMessage.value = errorMessages.join('; ');
+      } else {
+        errorMessage.value = error.message || "操作失败，请重试";
+      }
+    };
+
     const state = reactive({
       patient: computed(() => store.getters.getPatient),
       activeKey: ref(['1']),
@@ -115,6 +157,9 @@ export default defineComponent({
         date: { type: 'date', label: '日期' },
         ast: { type: 'number', label: 'AST' },
         alt: { type: 'number', label: 'ALT' },
+        tb: { type: 'number', label: 'TBIL' },
+        db: { type: 'number', label: 'DBIL' },
+        alb: { type: 'number', label: 'ALB' },
         pa: { type: 'number', label: 'PA' },
       },
       echocardiography: {
@@ -124,10 +169,16 @@ export default defineComponent({
         rca: { type: 'number', label: '右支' },
         rca_z: { type: 'number', label: '右支Z值' },
       },
-      otherTest: {
+      infectiousTest: {
         date: { type: 'date', label: '日期' },
         pct: { type: 'number', label: 'PCT' },
         crp: { type: 'number', label: 'CRP' },
+      },
+      customTest: {
+        name: { type: 'string', label: '检验名称' },
+        date: { type: 'date', label: '日期' },
+        result: { type: 'number', label: '结果' },
+        notes: { type: 'string', label: '备注' }
       },
       samples: {
         date: { type: 'date', label: '日期' },
@@ -178,11 +229,14 @@ export default defineComponent({
     };
 
     const handleUpdate = () => {
-      updatePatient(state.patient.id, toRaw(formState)).then(data => {
+      clearError(); // 清除之前的错误
+      const data = { ...toRaw(formState), version: state.patient.version };
+      updatePatient(state.patient.id, data).then(data => {
         updateModalVisible.value = false;
         store.dispatch("setPatient", data);
-      }).catch(err => {
-        message.error(err);
+      }).catch(error => {
+        updateModalVisible.value = false;
+        handleError(error);
       });
     };
 
@@ -190,7 +244,6 @@ export default defineComponent({
     const handleCancel = () => {
       // 若数据未提交，提醒用户确认
       if (showSubmitBtn.value) {
-        message.warning("您有数据尚未提交");
         console.log(showSubmitBtn.value);
         return;
       }
@@ -228,15 +281,15 @@ export default defineComponent({
 
     const handleSubmit = () => {
       btnLoading.value = true;
+      clearError(); // 清除之前的错误
+      
       postData().then(() => {
         btnLoading.value = false;
         // 将completed重设为初始状态
         store.dispatch('setComplete', {});
-        message.success('数据提交成功');
       }).catch(error => {
         btnLoading.value = false;
-        message.error('数据提交失败');
-        console.log(error);
+        handleError(error);
       });
     }
 
@@ -246,11 +299,13 @@ export default defineComponent({
       btnLoading,
       showSubmitBtn,
       updateModalVisible,
+      errorMessage,
 
       onUpdatePatient,
       handleUpdate,
       handleCancel,
       handleSubmit,
+      clearError,
     };
   }
 })

@@ -118,7 +118,7 @@ export default defineComponent({
   height: 44px;
   margin: 10px 24px 10px 0;
   /* background: rgba(255, 255, 255, 0.3); */
-  background-image: url("~@/assets/logo.svg");
+  background-image: url("../assets/logo.svg");
   background-size: auto;
   background-repeat: no-repeat;
   background-position: center;

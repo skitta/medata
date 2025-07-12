@@ -64,7 +64,7 @@ import {
 } from "vue";
 import { Line, Histogram } from "@antv/g2plot";
 import { Row, Col, Card, Statistic, Space } from "ant-design-vue";
-import { getSummary, getCountByMonth, getAgeByGroup } from "@/api/kawasaki";
+import { getSummary, getCountByMonth, getAgeByGroup } from "../../api/kawasaki";
 
 export default defineComponent({
   name: "DashboardView",

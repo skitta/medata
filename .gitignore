@@ -8,9 +8,10 @@
 # project
 *.sqlite3
 **/__pycache__
-
-# django
-**/migrations
+/static
 
 # node
 **/node_modules
+
+.venv
+SOFTWARE_COPYRIGHT_APPLICATION.md

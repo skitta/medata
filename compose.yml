@@ -1,13 +1,21 @@
 services:
-  django-web:
+  medata:
+    image: skitta440/medata:latest
+    platform: linux/amd64
     build: .
-    container_name: medata
     ports:
-      - "8000:8000"
+      - "8000:80"
+    volumes:
+      - ./db.sqlite3:/medata/db.sqlite3
     environment:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       DEBUG: ${DEBUG}
       DJANGO_LOGLEVEL: ${DJANGO_LOGLEVEL}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+    restart: unless-stopped
     env_file:
       - .env
+
+volumes:
+  medata_db:
+    driver: local

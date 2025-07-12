@@ -1,8 +1,9 @@
 import axios from "axios";
-import store from "@/store";
+import store from "../store";
 import Cookies from "js-cookie";
 
-axios.defaults.baseURL = '/api/kawasaki/';
+// axios.defaults.baseURL = '/api/kawasaki/';
+axios.defaults.baseURL = 'http://127.0.0.1:8000/api/kawasaki/';
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
 axios.defaults.headers.post['X-CSRFToken'] = Cookies.get('csrftoken') || '';
 
@@ -41,8 +42,8 @@ function getGroups() {
     if (groupList.length !== 0) {
       resolve(groupList);
     } else {
-      axios.get("groups/").then(response => {
-        groupList = response.data.map(group => ({
+      axios.get("enrollGroups/").then(response => {
+        groupList = response.data.results.map(group => ({
           value: group.id,
           label: group.name,
         }));
@@ -184,10 +185,10 @@ function exportEchocardiography(params) {
   });
 }
 
-function exportOtherTests(params) {
+function exportInfectiousTests(params) {
   return new Promise((resolve, reject) => {
     axios.get(
-      "otherTests/export/",
+      "infectiousTests/export/",
       {
         params: params
       }
@@ -257,6 +258,22 @@ function getExportFile() {
   });
 }
 
+function exportCustomTests(params) {
+  return new Promise((resolve, reject) => {
+    axios.get(
+      "customTests/export/",
+      {
+        params: params
+      }
+    ).then(response => {
+      download(response);
+      resolve(response.headers);
+    }).catch(error => {
+      reject(error);
+    });
+  });
+}
+
 export {
   getGroups,
   addPatient,
@@ -269,10 +286,11 @@ export {
   exportBloodTests,
   exportLiverFunctions,
   exportEchocardiography,
-  exportOtherTests,
+  exportInfectiousTests,
   exportSamples,
   getSummary,
   getCountByMonth,
   getAgeByGroup,
-  getExportFile
+  getExportFile,
+  exportCustomTests
 }

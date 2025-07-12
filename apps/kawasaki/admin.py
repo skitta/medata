@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Patient, BloodTest, LiverFunction, Echocardiography, OtherTest, EnrollGroup, Samples
+from .models import Patient, BloodTest, LiverFunction, Echocardiography, InfectiousTest, EnrollGroup, Samples, CustomTest
 
 
 admin.site.site_title = 'Medata'
@@ -22,8 +22,13 @@ class EchocardiographyInline(admin.TabularInline):
     extra = 1
 
 
-class OtherTestInline(admin.TabularInline):
-    model = OtherTest
+class InfectiousTestInline(admin.TabularInline):
+    model = InfectiousTest
+    extra = 1
+
+
+class CustomTestInline(admin.TabularInline):
+    model = CustomTest
     extra = 1
 
 
@@ -40,7 +45,7 @@ class EnrollGroupAdmin(admin.ModelAdmin):
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
     list_display = ('registered_ID', 'full_name', 'in_date', 'group', 'resistance', 'relapse')
-    inlines = [BloodTestInline, LiverFunctionInline, EchocardiographyInline, OtherTestInline, SamplesInline]
+    inlines = [BloodTestInline, LiverFunctionInline, EchocardiographyInline, InfectiousTestInline, SamplesInline]
 
 
 @admin.register(BloodTest)
@@ -58,9 +63,14 @@ class EchocardiographyAdmin(admin.ModelAdmin):
     list_display = ('patient', 'date', 'lmca', 'lmca_z', 'rca', 'rca_z')
 
 
-@admin.register(OtherTest)
-class OtherTestAdmin(admin.ModelAdmin):
+@admin.register(InfectiousTest)
+class infectiousTestAdmin(admin.ModelAdmin):
     list_display = ('patient', 'date', 'pct', 'crp')
+
+
+@admin.register(CustomTest)
+class CustomTestAdmin(admin.ModelAdmin):
+    list_display = ('patient', 'date', 'name', 'result', 'notes')
 
 
 @admin.register(Samples)

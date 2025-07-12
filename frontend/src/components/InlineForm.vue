@@ -181,6 +181,8 @@ export default defineComponent({
               name: props.name,
               data: true
             });
+          } else {
+            store.dispatch('delComplete', props.name);
           }
         })
       } else {

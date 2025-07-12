@@ -1,6 +1,6 @@
 from import_export.resources import ModelResource
 
-from .models import Patient, BloodTest, LiverFunction, Echocardiography, OtherTest, Samples
+from .models import Patient, BloodTest, LiverFunction, Echocardiography, InfectiousTest, Samples, CustomTest
 
 
 class PatientResource(ModelResource):
@@ -27,10 +27,10 @@ class EchocardiographyResource(ModelResource):
         model = Echocardiography
 
 
-class OtherTestResource(ModelResource):
+class InfectiousTestResource(ModelResource):
 
     class Meta:
-        model = OtherTest
+        model = InfectiousTest
 
 
 class SamplesResource(ModelResource):
@@ -38,3 +38,8 @@ class SamplesResource(ModelResource):
     class Meta:
         model = Samples
 
+
+class CustomTestResource(ModelResource):
+
+    class Meta:
+        model = CustomTest

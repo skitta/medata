@@ -10,6 +10,7 @@ dependencies = [
     "django-filter>=22.1",
     "django-import-export>=2.8.0",
     "djangorestframework>=3.13.1",
+    "gunicorn>=22.0.0",
     "numpy>=1.22.3",
     "pandas>=1.4.2",
     "whitenoise>=6.9.0",

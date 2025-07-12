@@ -1,5 +1,14 @@
 <template>
   <a-card title="添加新患者">
+    <a-alert
+      v-if="errorMessage"
+      :message="errorMessage"
+      type="error"
+      show-icon
+      closable
+      @close="clearError"
+      style="margin-bottom: 16px"
+    />
     <a-form name="Patient" ref="formRef" :model="formState" :rules="rules" :label-col="{ span: 4 }"
       :wrapper-col="{ span: 18 }">
       <a-form-item label="登记号" name="registered_ID">
@@ -57,10 +66,10 @@
 <script>
 import { defineComponent, ref, reactive, toRaw, onMounted } from "vue";
 import {
-  Card, Form, Input, Select, DatePicker, InputNumber, Button, Modal, Radio, message
+  Card, Form, Input, Select, DatePicker, InputNumber, Button, Modal, Radio, Alert
 } from "ant-design-vue";
 import { useStore } from "vuex";
-import { getGroups, getPatients, getTestsByPatientId, addPatient } from "@/api/kawasaki";
+import { getGroups, getPatients, getTestsByPatientId, addPatient } from "../../../api/kawasaki";
 import { useRouter } from "vue-router";
 
 const { Item } = Form;
@@ -82,10 +91,12 @@ export default defineComponent({
     AModal: Modal,
     ARadioGroup: Group,
     ARadio: Radio,
+    AAlert: Alert,
   },
 
   setup() {
     const formRef = ref();
+    const errorMessage = ref("");
     const formState = reactive({
       registered_ID: "",
       document_ID: "",
@@ -107,6 +118,33 @@ export default defineComponent({
     const modalVisible = ref(false);
     const modalMsg = ref("");
     const confireLoading = ref(false);
+
+    const clearError = () => {
+      errorMessage.value = "";
+    };
+
+    const handleError = (error) => {
+      console.error(error);
+      if (error.response && error.response.status === 409) {
+        errorMessage.value = "数据冲突：其他用户可能已修改此数据，请刷新页面重试";
+      } else if (error.response && error.response.data && error.response.data.detail) {
+        errorMessage.value = error.response.data.detail;
+      } else if (error.response && error.response.data) {
+        // 处理字段验证错误
+        const errors = error.response.data;
+        const errorMessages = [];
+        for (const field in errors) {
+          if (Array.isArray(errors[field])) {
+            errorMessages.push(`${field}: ${errors[field].join(', ')}`);
+          } else {
+            errorMessages.push(`${field}: ${errors[field]}`);
+          }
+        }
+        errorMessage.value = errorMessages.join('; ');
+      } else {
+        errorMessage.value = error.message || "操作失败，请重试";
+      }
+    };
 
     let checkAge = async (rule, value) => {
       if (!value) {
@@ -148,10 +186,11 @@ export default defineComponent({
           existPatient = {};
           modalMsg.value = "";
           modalVisible.value = false;
+          clearError(); // 清除之前的错误
           return Promise.resolve();
         }
       } catch (error) {
-        console.log(error);
+        handleError(error);
         return Promise.reject("检索登记号失败");
       }
     };
@@ -186,6 +225,8 @@ export default defineComponent({
 
     const handleOk = () => {
       confireLoading.value = true;
+      clearError(); // 清除之前的错误
+      
       if (Object.keys(existPatient).length > 0) {
         // 如果数据库中存在该患者，则获取该患者的所有临床数据
         getTestsByPatientId(existPatient.id)
@@ -196,10 +237,9 @@ export default defineComponent({
             modalVisible.value = false;
             router.push({ name: "add-tests" });
           }).catch(error => {
-            console.log(error);
             confireLoading.value = false;
-            modalMsg.value = "加载数据失败";
-            message.error("加载数据失败");
+            modalVisible.value = false;
+            handleError(error);
           });
       } else {
         // 否则提交新患者至数据库
@@ -211,10 +251,9 @@ export default defineComponent({
             modalVisible.value = false;
             router.push({ name: "add-tests" });
           }).catch(error => {
-            console.log(error);
             confireLoading.value = false;
-            modalMsg.value = "提交数据失败";
-            message.error("提交数据失败");
+            modalVisible.value = false;
+            handleError(error);
           });
       }
     }
@@ -226,9 +265,11 @@ export default defineComponent({
       modalVisible,
       modalMsg,
       confireLoading,
+      errorMessage,
       rules,
       showModal,
       handleOk,
+      clearError,
     };
   }
 })

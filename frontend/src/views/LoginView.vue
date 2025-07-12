@@ -1,10 +1,10 @@
 <template>
   <div class="login">
-    <particles-bg type="cobweb" :bg="true" />
+    <!-- <particles-bg type="cobweb" :bg="true" /> -->
     <a-card hoverable class="login-card">
       <template #cover>
         <div class="login-cover">
-          <img src="~@/assets/doctor.svg" alt="cover" />
+          <img src="../assets/doctor.svg" alt="cover" />
         </div>
       </template>
       <div class="login-card-container">
@@ -45,10 +45,10 @@
 import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
 import { defineComponent, reactive, ref } from "vue";
 import { Form, Input, Button, Card, Select, Alert } from "ant-design-vue";
-import { ParticlesBg } from "particles-bg-vue";
+// import { ParticlesBg } from "particles-bg-vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
-import { getToken } from "@/api/login";
+import { getToken } from "../api/login";
 
 const { Item } = Form;
 const { Password } = Input;
@@ -64,7 +64,7 @@ export default defineComponent({
     ACard: Card,
     AInputPassword: Password,
     ASelect: Select,
-    ParticlesBg,
+    // ParticlesBg,
     AAlert: Alert,
   },
   
@@ -157,7 +157,7 @@ export default defineComponent({
   align-items: center;
   height: 200px;
   padding: 20px;
-  background-image: url("~@/assets/login.bg.svg");
+  background-image: url("../assets/login.bg.svg");
   background-size: auto;
   background-position: bottom;
 }
