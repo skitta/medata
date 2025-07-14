@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import zipfile
 
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 from django.http import Http404, HttpResponse, FileResponse
 
 from rest_framework import viewsets, filters, status
@@ -18,6 +20,38 @@ from .serializers import PatientSerializer, BloodTestSerializer, LiverFunctionSe
     EnrollGroupSerializer, InfectiousTestSerializer, SamplesSerializer, CustomTestSerializer
 from .resource import PatientResource, BloodTestResource, LiverFunctionResource, EchocardiographyResource, \
     InfectiousTestResource, SamplesResource, CustomTestResource
+from . import signals
+
+
+class CustomAuthToken(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                         context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        
+        validated_data = serializer.validated_data
+        if not isinstance(validated_data, dict):
+            return Response(
+                {'error': 'Authentication failed - invalid response format'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+        if 'user' not in validated_data:
+            return Response(
+                {'error': 'Authentication failed - user not found in response'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            
+        user = validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        
+        # Get full name without space
+        full_name = f"{user.first_name}{user.last_name}".strip()
+
+        return Response({
+            'token': token.key,
+            'full_name': full_name or user.username
+        })
 
 
 class OptimisticLockingViewSet(viewsets.ModelViewSet):
@@ -49,6 +83,12 @@ class PatientViewSet(OptimisticLockingViewSet):
         'relapse': ['exact']
     }
 
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user, modifier=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(modifier=self.request.user)
+
     @action(detail=False, methods=['get'])
     def export(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -60,118 +100,106 @@ class PatientViewSet(OptimisticLockingViewSet):
         return response
 
 
-class CustomTestViewSet(OptimisticLockingViewSet):
+class BaseTestViewSet(OptimisticLockingViewSet):
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'patient': ['exact', 'in'],
+    }
+
+    def perform_create(self, serializer):
+        signals.set_user(self.request.user)
+        serializer.save()
+        signals.set_user(None)
+
+    def perform_update(self, serializer):
+        signals.set_user(self.request.user)
+        serializer.save()
+        signals.set_user(None)
+
+    @action(detail=False, methods=['get'])
+    def export(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        resource_class = self.get_resource_class()
+        dataset = resource_class().export(queryset)
+        response = HttpResponse(dataset.csv, headers={
+            'Content-Type': 'text/csv',
+            'Content-Disposition': f'attachment; filename="{self.get_export_filename()}"'
+        })
+        return response
+
+    def get_resource_class(self):
+        # This method should be overridden in subclasses
+        raise NotImplementedError("Subclasses must implement get_resource_class()")
+
+    def get_export_filename(self):
+        # This method should be overridden in subclasses
+        raise NotImplementedError("Subclasses must implement get_export_filename()")
+
+
+class CustomTestViewSet(BaseTestViewSet):
     queryset = CustomTest.objects.all()
     serializer_class = CustomTestSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'patient': ['exact', 'in'],
-    }
+    
+    def get_resource_class(self):
+        return CustomTestResource
 
-    @action(detail=False, methods=['get'])
-    def export(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        dataset = CustomTestResource().export(queryset)
-        response = HttpResponse(dataset.csv, headers={
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename="customTests.csv"'
-        })
-        return response
+    def get_export_filename(self):
+        return "customTests.csv"
 
 
-class BloodTestViewSet(OptimisticLockingViewSet):
+class BloodTestViewSet(BaseTestViewSet):
     queryset = BloodTest.objects.all()
     serializer_class = BloodTestSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'patient': ['exact', 'in'],
-    }
 
-    @action(detail=False, methods=['get'])
-    def export(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        dataset = BloodTestResource().export(queryset)
-        response = HttpResponse(dataset.csv, headers={
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename="bloodTests.csv"'
-        })
-        return response
+    def get_resource_class(self):
+        return BloodTestResource
+
+    def get_export_filename(self):
+        return "bloodTests.csv"
 
 
-class LiverFunctionViewSet(OptimisticLockingViewSet):
+class LiverFunctionViewSet(BaseTestViewSet):
     queryset = LiverFunction.objects.all()
     serializer_class = LiverFunctionSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'patient': ['exact', 'in'],
-    }
 
-    @action(detail=False, methods=['get'])
-    def export(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        dataset = LiverFunctionResource().export(queryset)
-        response = HttpResponse(dataset.csv, headers={
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename="liverFunctions.csv"'
-        })
-        return response
+    def get_resource_class(self):
+        return LiverFunctionResource
+
+    def get_export_filename(self):
+        return "liverFunctions.csv"
 
 
-class EchocardiographyViewSet(OptimisticLockingViewSet):
+class EchocardiographyViewSet(BaseTestViewSet):
     queryset = Echocardiography.objects.all()
     serializer_class = EchocardiographySerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'patient': ['exact', 'in'],
-    }
 
-    @action(detail=False, methods=['get'])
-    def export(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        dataset = EchocardiographyResource().export(queryset)
-        response = HttpResponse(dataset.csv, headers={
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename="echocardiography.csv"'
-        })
-        return response
+    def get_resource_class(self):
+        return EchocardiographyResource
+
+    def get_export_filename(self):
+        return "echocardiography.csv"
 
 
-class InfectiousTestViewSet(OptimisticLockingViewSet):
+class InfectiousTestViewSet(BaseTestViewSet):
     queryset = InfectiousTest.objects.all()
     serializer_class = InfectiousTestSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'patient': ['exact', 'in'],
-    }
 
-    @action(detail=False, methods=['get'])
-    def export(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        dataset = InfectiousTestResource().export(queryset)
-        response = HttpResponse(dataset.csv, headers={
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename="others.csv"'
-        })
-        return response
+    def get_resource_class(self):
+        return InfectiousTestResource
+
+    def get_export_filename(self):
+        return "others.csv"
 
 
-class SamplesViewSet(OptimisticLockingViewSet):
+class SamplesViewSet(BaseTestViewSet):
     queryset = Samples.objects.all()
     serializer_class = SamplesSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = {
-        'patient': ['exact', 'in'],
-    }
 
-    @action(detail=False, methods=['get'])
-    def export(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        dataset = SamplesResource().export(queryset)
-        response = HttpResponse(dataset.csv, headers={
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename="samples.csv"'
-        })
-        return response
+    def get_resource_class(self):
+        return SamplesResource
+
+    def get_export_filename(self):
+        return "samples.csv"
 
 
 class EnrollGroupViewSet(viewsets.ModelViewSet):

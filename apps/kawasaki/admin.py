@@ -44,8 +44,17 @@ class EnrollGroupAdmin(admin.ModelAdmin):
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ('registered_ID', 'full_name', 'in_date', 'group', 'resistance', 'relapse')
+    list_display = ('registered_ID', 'full_name', 'in_date', 'group', 'resistance', 'relapse', 'created_at', 'creator_full_name', 'modified_at', 'modifier_full_name')
     inlines = [BloodTestInline, LiverFunctionInline, EchocardiographyInline, InfectiousTestInline, CustomTestInline, SamplesInline]
+    readonly_fields = ('creator_full_name', 'modifier_full_name', 'created_at', 'modified_at')
+
+    @admin.display(description='创建者')
+    def creator_full_name(self, obj):
+        return obj.creator_full_name
+
+    @admin.display(description='修改者')
+    def modifier_full_name(self, obj):
+        return obj.modifier_full_name
 
 
 @admin.register(BloodTest)

@@ -8,13 +8,16 @@ import { useMainStore } from '@/stores'
 
 export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(TokenStorage.isTokenValid())
+  const fullName = ref(TokenStorage.getUsername() || '') // Now stores full name
   const router = useRouter()
 
   async function login(credentials: LoginRequest) {
     try {
-      const token = await getToken(credentials.username, credentials.password)
-      TokenStorage.setToken(token)
+      const response = await getToken(credentials.username, credentials.password)
+      TokenStorage.setToken(response.token)
+      TokenStorage.setUsername(response.full_name) // Store full name from API response
       isAuthenticated.value = true
+      fullName.value = response.full_name
       await router.push({ name: 'home' })
     } catch (error) {
       isAuthenticated.value = false
@@ -26,12 +29,15 @@ export const useAuthStore = defineStore('auth', () => {
     const mainStore = useMainStore()
     mainStore.clearState()
     TokenStorage.clearToken()
+    TokenStorage.clearUsername()
     isAuthenticated.value = false
+    fullName.value = ''
     await router.push({ name: 'login' })
   }
 
   return {
     isAuthenticated,
+    fullName,
     login,
     logout,
   }

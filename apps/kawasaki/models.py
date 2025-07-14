@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models import F
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class OptimisticLockingModel(models.Model):
@@ -67,9 +69,25 @@ class Patient(OptimisticLockingModel):
     group = models.ForeignKey(EnrollGroup, on_delete=models.CASCADE, verbose_name='分组')
     resistance = models.BooleanField(verbose_name='IVIG 抵抗', default=False)
     relapse = models.BooleanField(verbose_name='复发', default=False)
+    created_at = models.DateTimeField(default=timezone.now, verbose_name='创建时间')
+    creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_patients', verbose_name='创建者')
+    modified_at = models.DateTimeField(auto_now=True, verbose_name='修改时间')
+    modifier = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='modified_patients', verbose_name='修改者')
     
     def __str__(self):
         return "{name}({id})".format(name=self.full_name, id=self.registered_ID)
+
+    @property
+    def creator_full_name(self):
+        if self.creator:
+            return f"{self.creator.first_name}{self.creator.last_name}".strip()
+        return "N/A"
+    
+    @property
+    def modifier_full_name(self):
+        if self.modifier:
+            return f"{self.modifier.first_name}{self.modifier.last_name}".strip()
+        return "N/A"
 
     class Meta(OptimisticLockingModel.Meta):
         verbose_name = '病人'

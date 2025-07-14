@@ -3,6 +3,7 @@ import CryptoJS from 'crypto-js'
 const SECRET_KEY = 'medata-token-encryption-key-2024'
 const TOKEN_KEY = 'mt_token'
 const EXPIRY_KEY = 'mt_expiry'
+const USERNAME_KEY = 'mt_fullname'  // Changed to store full name instead of username
 
 export interface SecureToken {
   token: string
@@ -105,6 +106,38 @@ export class TokenStorage {
   static clearToken(): void {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(EXPIRY_KEY)
+  }
+
+  /**
+   * Stores the full name in localStorage.
+   * @param fullName The full name string to store.
+   */
+  static setUsername(fullName: string): void {
+    try {
+      localStorage.setItem(USERNAME_KEY, fullName)
+    } catch (error) {
+      console.error('Error storing username:', error)
+    }
+  }
+
+  /**
+   * Retrieves the full name from localStorage.
+   * @returns The full name string, or null.
+   */
+  static getUsername(): string | null {
+    try {
+      return localStorage.getItem(USERNAME_KEY)
+    } catch (error) {
+      console.error('Error retrieving username:', error)
+      return null
+    }
+  }
+
+  /**
+   * Removes the username from localStorage.
+   */
+  static clearUsername(): void {
+    localStorage.removeItem(USERNAME_KEY)
   }
 
   /**

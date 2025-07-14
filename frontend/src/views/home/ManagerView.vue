@@ -121,6 +121,18 @@ const columns = computed((): any[] => [
       { text: "复发", value: "relapse" },
     ],
     responsive: ["md"] as any,
+  },
+  {
+    title: "创建人",
+    dataIndex: "creation_info",
+    key: "creation_info",
+    responsive: ["md"] as any,
+  },
+  {
+    title: "修改人",
+    dataIndex: "modification_info",
+    key: "modification_info",
+    responsive: ["md"] as any,
   }
 ]);
 
@@ -148,6 +160,11 @@ const dataSource = computed(() => {
     if (patient.relapse) {
       tags.push("复发");
     }
+    const formatDate = (dateString?: string) => {
+      if (!dateString) return "N/A";
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    }
     return {
       key: patient.id,
       registered_ID: patient.registered_ID,
@@ -155,6 +172,8 @@ const dataSource = computed(() => {
       in_date: patient.in_date,
       group: groupList.value.find(item => item.value === patient.group)?.label || "未确定",
       tags: tags,
+      creation_info: `${patient.creator_name || 'N/A'} (${formatDate(patient.created_at)})`,
+      modification_info: `${patient.modifier_name || 'N/A'} (${formatDate(patient.modified_at)})`,
     };
   }) || [];
 });

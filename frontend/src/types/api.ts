@@ -21,6 +21,10 @@ export interface Patient {
   relapse: boolean;
   group?: number;
   version?: number;
+  creator_name?: string;
+  created_at?: string;
+  modifier_name?: string;
+  modified_at?: string;
 }
 
 // 定义分组类型

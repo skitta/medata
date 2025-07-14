@@ -23,7 +23,8 @@
           管理
         </a-menu-item>
       </a-menu>
-      <div class="logout">
+      <div class="user-info">
+        <span>您好，{{ fullName }}</span>
         <a-button type="link" size="small" @click="logout">
           退出
         </a-button>
@@ -43,8 +44,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import { Layout as ALayout, Menu as AMenu, LayoutHeader as ALayoutHeader, LayoutContent as ALayoutContent, LayoutFooter as ALayoutFooter, MenuItem as AMenuItem } from "ant-design-vue";
+import { onMounted, ref, computed } from "vue";
+import { Layout as ALayout, Menu as AMenu, LayoutHeader as ALayoutHeader, LayoutContent as ALayoutContent, LayoutFooter as ALayoutFooter, MenuItem as AMenuItem, Button as AButton } from "ant-design-vue";
 import {
   BarChartOutlined,
   PlusSquareOutlined,
@@ -55,6 +56,8 @@ import type { SelectInfo } from "ant-design-vue/es/menu/src/interface";
 import { useAuthStore } from "@/stores/auth";
 
 const selectedKeys = ref<string[]>(["dashboard"]);
+const authStore = useAuthStore();
+const fullName = computed(() => authStore.fullName);
 
 const router = useRouter();
 const changeRouter = (info: SelectInfo): void => {
@@ -65,7 +68,6 @@ const changeRouter = (info: SelectInfo): void => {
 };
 
 const logout = () => {
-  const authStore = useAuthStore();
   authStore.logout();
 };
 
@@ -97,10 +99,15 @@ onBeforeRouteUpdate((to) => {
   background-position: center;
 }
 
-.logout {
+.user-info {
   position: absolute;
   top: 0;
   right: 50px;
+  color: #fff;
+}
+
+.user-info span {
+  margin-right: 16px;
 }
 
 [data-theme="dark"] .site-layout-content {

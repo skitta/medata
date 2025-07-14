@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
-from rest_framework.authtoken.views import obtain_auth_token
+from apps.kawasaki.views import CustomAuthToken
 
 urlpatterns = [
     path('admin/', admin.site.urls, name='admin'),
@@ -25,5 +25,5 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-    path('api/token-auth/', obtain_auth_token, name='api_token_auth'),
+    path('api/token-auth/', CustomAuthToken.as_view(), name='api_token_auth'),
 ]
