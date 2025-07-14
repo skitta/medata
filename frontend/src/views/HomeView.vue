@@ -23,11 +23,11 @@
           管理
         </a-menu-item>
       </a-menu>
-      <!-- <div class="logout">
+      <div class="logout">
         <a-button type="link" size="small" @click="logout">
           退出
         </a-button>
-      </div> -->
+      </div>
     </a-layout-header>
     <a-layout-content>
       <router-view v-slot="{ Component }">
@@ -52,6 +52,7 @@ import {
 } from "@ant-design/icons-vue";
 import { onBeforeRouteUpdate, useRouter } from "vue-router";
 import type { SelectInfo } from "ant-design-vue/es/menu/src/interface";
+import { useAuthStore } from "@/stores/auth";
 
 const selectedKeys = ref<string[]>(["dashboard"]);
 
@@ -61,6 +62,11 @@ const changeRouter = (info: SelectInfo): void => {
   router.push({
     name: info.selectedKeys[0] as string,
   });
+};
+
+const logout = () => {
+  const authStore = useAuthStore();
+  authStore.logout();
 };
 
 onMounted(() => {

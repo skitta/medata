@@ -11,7 +11,7 @@ export interface SecureToken {
 
 export class TokenStorage {
   /**
-   * Encrypts and stores the token in sessionStorage.
+   * Encrypts and stores the token in localStorage.
    * @param token The token string to store.
    * @param expiresInHours The number of hours until the token expires. Defaults to 24.
    */
@@ -19,22 +19,22 @@ export class TokenStorage {
     try {
       const expiresAt = Date.now() + expiresInHours * 60 * 60 * 1000
       const encryptedToken = CryptoJS.AES.encrypt(token, SECRET_KEY).toString()
-      sessionStorage.setItem(TOKEN_KEY, encryptedToken)
-      sessionStorage.setItem(EXPIRY_KEY, expiresAt.toString())
+      localStorage.setItem(TOKEN_KEY, encryptedToken)
+      localStorage.setItem(EXPIRY_KEY, expiresAt.toString())
     } catch (error) {
       console.error('Error storing token:', error)
     }
   }
 
   /**
-   * Retrieves and decrypts the token from sessionStorage.
+   * Retrieves and decrypts the token from localStorage.
    * Returns null if the token is not found, expired, or if decryption fails.
    * @returns The decrypted token string, or null.
    */
   static getToken(): string | null {
     try {
-      const encryptedToken = sessionStorage.getItem(TOKEN_KEY)
-      const expiry = sessionStorage.getItem(EXPIRY_KEY)
+      const encryptedToken = localStorage.getItem(TOKEN_KEY)
+      const expiry = localStorage.getItem(EXPIRY_KEY)
 
       if (!encryptedToken || !expiry) {
         return null
@@ -71,7 +71,7 @@ export class TokenStorage {
    */
   static isTokenExpiringSoon(minutes: number = 5): boolean {
     try {
-      const expiry = sessionStorage.getItem(EXPIRY_KEY)
+      const expiry = localStorage.getItem(EXPIRY_KEY)
       if (!expiry) return false
 
       const expiryTime = parseInt(expiry, 10)
@@ -89,7 +89,7 @@ export class TokenStorage {
    */
   static getTokenTimeRemaining(): number {
     try {
-      const expiry = sessionStorage.getItem(EXPIRY_KEY)
+      const expiry = localStorage.getItem(EXPIRY_KEY)
       if (!expiry) return 0
 
       const remaining = parseInt(expiry, 10) - Date.now()
@@ -100,11 +100,11 @@ export class TokenStorage {
   }
 
   /**
-   * Removes the token and its expiry from sessionStorage.
+   * Removes the token and its expiry from localStorage.
    */
   static clearToken(): void {
-    sessionStorage.removeItem(TOKEN_KEY)
-    sessionStorage.removeItem(EXPIRY_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(EXPIRY_KEY)
   }
 
   /**
@@ -114,12 +114,12 @@ export class TokenStorage {
    */
   static refreshTokenExpiry(expiresInHours: number = 24): boolean {
     try {
-      const encryptedToken = sessionStorage.getItem(TOKEN_KEY)
+      const encryptedToken = localStorage.getItem(TOKEN_KEY)
       if (!encryptedToken) return false
 
       // Re-set the token with a new expiry without re-encrypting
       const expiresAt = Date.now() + expiresInHours * 60 * 60 * 1000
-      sessionStorage.setItem(EXPIRY_KEY, expiresAt.toString())
+      localStorage.setItem(EXPIRY_KEY, expiresAt.toString())
       return true
     } catch {
       return false

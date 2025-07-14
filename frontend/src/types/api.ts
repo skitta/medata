@@ -140,3 +140,9 @@ export interface SelectOption {
 export interface AxiosHeaders {
   [key: string]: string;
 }
+
+// 登录请求类型
+export interface LoginRequest {
+  username: string;
+  password: string;
+}

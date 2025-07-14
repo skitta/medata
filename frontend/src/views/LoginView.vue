@@ -14,7 +14,7 @@
             </a-select>
           </a-form-item>
           <a-form-item>
-            <a-input v-model:value="formState.user" placeholder="Username" @change="handleInputChange">
+            <a-input v-model:value="formState.username" placeholder="Username" @change="handleInputChange">
               <template #prefix>
                 <UserOutlined style="color: rgba(0, 0, 0, 0.25)" />
               </template>
@@ -28,7 +28,7 @@
             </a-input-password>
           </a-form-item>
           <a-form-item>
-            <a-button type="primary" html-type="submit" :disabled="formState.user === '' || formState.password === ''" :loading="submitLoading">
+            <a-button type="primary" html-type="submit" :disabled="formState.username === '' || formState.password === ''" :loading="submitLoading">
               Log in
             </a-button>
           </a-form-item>
@@ -45,13 +45,10 @@
 import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
 import { reactive, ref } from "vue";
 import { Form as AForm, Input as AInput, Button as AButton, Card as ACard, Select as ASelect, Alert as AAlert, InputPassword as AInputPassword } from "ant-design-vue";
-import { useMainStore } from "@/stores";
-import { useRouter } from "vue-router";
-import { getToken } from "@/api/login";
-import { TokenStorage } from "@/utils/tokenStorage";
+import { useAuthStore } from "@/stores/auth";
 
 interface FormState {
-  user: string;
+  username: string;
   password: string;
   role: string;
   msg: string;
@@ -62,11 +59,10 @@ interface RoleOption {
   label: string;
 }
 
-const store = useMainStore();
-const router = useRouter();
+const authStore = useAuthStore();
 
 const formState = reactive<FormState>({
-  user: "",
+  username: "",
   password: "",
   role: "doctor",
   msg: "",
@@ -87,12 +83,8 @@ const submitLoading = ref<boolean>(false);
 
 const handleSubmit = async (): Promise<void> => {
   submitLoading.value = true;
-  const { user, password } = formState;
-
   try {
-    const token = await getToken(user, password);
-    TokenStorage.setToken(token);
-    router.push({ name: 'home' });
+    await authStore.login({ username: formState.username, password: formState.password });
   } catch (err: any) {
     console.error('Login failed:', err);
     if (err.code === 'ERR_NETWORK') {

@@ -1,6 +1,5 @@
-import axios, { AxiosResponse } from "axios";
-import Cookies from "js-cookie";
-import { TokenStorage } from "@/utils/tokenStorage";
+import { kawasakiApi } from '@/plugins/axios'
+import type { AxiosResponse } from 'axios'
 import type {
   ApiResponse,
   Patient,
@@ -12,24 +11,6 @@ import type {
   SelectOption
 } from "@/types/api";
 
-// 使用环境变量配置 API 基础 URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-axios.defaults.baseURL = `${API_BASE_URL}/api/kawasaki/`;
-axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
-axios.defaults.headers.post['X-CSRFToken'] = Cookies.get('csrftoken') || '';
-
-axios.interceptors.request.use(
-  (config) => {
-    const token = TokenStorage.getToken();
-    if (token) {
-      config.headers.Authorization = `Token ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 function download(response: AxiosResponse<Blob>): void {
   const blob = new Blob([response.data], { type: "text/csv" });
@@ -50,7 +31,7 @@ function download(response: AxiosResponse<Blob>): void {
 
 export function getGroups(): Promise<SelectOption[]> {
   return new Promise((resolve, reject) => {
-    axios.get<ApiResponse<EnrollGroup>>("enrollGroups/").then(response => {
+    kawasakiApi.get<ApiResponse<EnrollGroup>>("enrollGroups/").then(response => {
       const groupList: SelectOption[] = response.data.results.map(group => ({
         value: group.id,
         label: group.name,
@@ -64,7 +45,7 @@ export function getGroups(): Promise<SelectOption[]> {
 
 export function addPatient(data: Partial<Patient>): Promise<Patient> {
   return new Promise((resolve, reject) => {
-    axios.post<Patient>("patients/", data).then(response => {
+    kawasakiApi.post<Patient>("patients/", data).then(response => {
       resolve(response.data);
     }).catch(error => {
       reject(error);
@@ -74,7 +55,7 @@ export function addPatient(data: Partial<Patient>): Promise<Patient> {
 
 export function getPatients(params?: ExportParams): Promise<ApiResponse<Patient>> {
   return new Promise((resolve, reject) => {
-    axios.get<ApiResponse<Patient>>(
+    kawasakiApi.get<ApiResponse<Patient>>(
       "patients/",
       {
         params: params
@@ -89,7 +70,7 @@ export function getPatients(params?: ExportParams): Promise<ApiResponse<Patient>
 
 export function updatePatient(id: number, data: Partial<Patient>): Promise<Patient> {
   return new Promise((resolve, reject) => {
-    axios.patch<Patient>(`patients/${id}/`, data).then(response => {
+    kawasakiApi.patch<Patient>(`patients/${id}/`, data).then(response => {
       resolve(response.data);
     }).catch(error => {
       reject(error);
@@ -99,7 +80,7 @@ export function updatePatient(id: number, data: Partial<Patient>): Promise<Patie
 
 export function exportPatients(params?: ExportParams): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.get(
+    kawasakiApi.get(
       "patients/export/",
       {
         params: params
@@ -115,7 +96,7 @@ export function exportPatients(params?: ExportParams): Promise<any> {
 
 export function addTestByName(name: string, data: any): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.post(`${name}/`, data).then(response => {
+    kawasakiApi.post(`${name}/`, data).then(response => {
       resolve(response.data);
     }).catch(error => {
       reject(error);
@@ -125,7 +106,7 @@ export function addTestByName(name: string, data: any): Promise<any> {
 
 export function getTestsByPatientId(id: number): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.get(`all-tests-by-patient/${id}/`).then(response => {
+    kawasakiApi.get(`all-tests-by-patient/${id}/`).then(response => {
       resolve(response.data);
     }).catch(error => {
       reject(error);
@@ -135,7 +116,7 @@ export function getTestsByPatientId(id: number): Promise<any> {
 
 export function updateTestByName(name: string, id: number, data: any): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.put(`${name}/${id}/`, data).then(response => {
+    kawasakiApi.put(`${name}/${id}/`, data).then(response => {
       resolve(response.data);
     }).catch(error => {
       reject(error);
@@ -145,7 +126,7 @@ export function updateTestByName(name: string, id: number, data: any): Promise<a
 
 export function exportBloodTests(params?: ExportParams): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.get(
+    kawasakiApi.get(
       "bloodTests/export/",
       {
         params: params
@@ -161,7 +142,7 @@ export function exportBloodTests(params?: ExportParams): Promise<any> {
 
 export function exportLiverFunctions(params?: ExportParams): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.get(
+    kawasakiApi.get(
       "liverFunction/export/",
       {
         params: params
@@ -177,7 +158,7 @@ export function exportLiverFunctions(params?: ExportParams): Promise<any> {
 
 export function exportEchocardiography(params?: ExportParams): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.get(
+    kawasakiApi.get(
       "echocardiography/export/",
       {
         params: params
@@ -193,7 +174,7 @@ export function exportEchocardiography(params?: ExportParams): Promise<any> {
 
 export function exportInfectiousTests(params?: ExportParams): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.get(
+    kawasakiApi.get(
       "infectiousTests/export/",
       {
         params: params
@@ -209,7 +190,7 @@ export function exportInfectiousTests(params?: ExportParams): Promise<any> {
 
 export function exportSamples(params?: ExportParams): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.get(
+    kawasakiApi.get(
       "samples/export/",
       {
         params: params
@@ -225,7 +206,7 @@ export function exportSamples(params?: ExportParams): Promise<any> {
 
 export function getSummary(): Promise<Summary> {
   return new Promise((resolve, reject) => {
-    axios.get<Summary>("summary/").then(response => {
+    kawasakiApi.get<Summary>("summary/").then(response => {
       resolve(response.data);
     }).catch(error => {
       reject(error);
@@ -235,7 +216,7 @@ export function getSummary(): Promise<Summary> {
 
 export function getCountByMonth(): Promise<MonthlyCount[]> {
   return new Promise((resolve, reject) => {
-    axios.get<MonthlyCount[]>("count-by-month/").then(response => {
+    kawasakiApi.get<MonthlyCount[]>("count-by-month/").then(response => {
       resolve(response.data);
     }).catch(error => {
       reject(error);
@@ -245,7 +226,7 @@ export function getCountByMonth(): Promise<MonthlyCount[]> {
 
 export function getAgeByGroup(): Promise<AgeDataByGroup> {
   return new Promise((resolve, reject) => {
-    axios.get<AgeDataByGroup>("age-by-group/").then(response => {
+    kawasakiApi.get<AgeDataByGroup>("age-by-group/").then(response => {
       resolve(response.data);
     }).catch(error => {
       reject(error);
@@ -255,7 +236,7 @@ export function getAgeByGroup(): Promise<AgeDataByGroup> {
 
 export function getExportFile(): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.get("export/all/", { responseType: 'blob' }).then(response => {
+    kawasakiApi.get("export/all/", { responseType: 'blob' }).then(response => {
       download(response);
       resolve(response.headers);
     }).catch(error => {
@@ -266,7 +247,7 @@ export function getExportFile(): Promise<any> {
 
 export function exportCustomTests(params?: ExportParams): Promise<any> {
   return new Promise((resolve, reject) => {
-    axios.get(
+    kawasakiApi.get(
       "customTests/export/",
       {
         params: params

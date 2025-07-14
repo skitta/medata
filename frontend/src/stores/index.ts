@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import type { MainState, TestData, CompleteData } from '@/types/store'
 import type { Patient, SelectOption } from '@/types/api'
-import { TokenStorage } from '@/utils/tokenStorage'
 
 export const useMainStore = defineStore('main', {
   state: (): MainState => ({
@@ -18,12 +17,11 @@ export const useMainStore = defineStore('main', {
     getComplete: (state: MainState): Record<string, any> => state.complete,
   },
   actions: {
-    logout() {
+    clearState() {
       this.patient = null
       this.groups = []
       this.tests = {}
       this.complete = {}
-      TokenStorage.clearToken()
     },
     setPatient(patient: Patient | null): void {
       this.patient = patient

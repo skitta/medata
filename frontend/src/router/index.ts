@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
-import { useMainStore } from '@/stores'
-import { TokenStorage } from '@/utils/tokenStorage'
+import { useAuthStore } from '@/stores/auth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -52,8 +51,15 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _from, next) => {
-  if (to.name !== 'login' && !TokenStorage.isTokenValid()) {
+  const authStore = useAuthStore()
+  const isLoggedIn = authStore.isAuthenticated
+
+  if (to.name !== 'login' && !isLoggedIn) {
+    // 如果用户未登录且访问的不是登录页，则重定向到登录页
     next({ name: 'login' })
+  } else if (to.name === 'login' && isLoggedIn) {
+    // 如果用户已登录且访问的是登录页，则重定向到主页
+    next({ name: 'home' })
   } else {
     next()
   }
