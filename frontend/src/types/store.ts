@@ -2,7 +2,6 @@ import type { Patient, SelectOption } from '@/types/api';
 
 // Store 状态类型
 export interface MainState {
-  token: string | null;
   patient: Patient | null;
   groups: SelectOption[];
   tests: Record<string, any>;

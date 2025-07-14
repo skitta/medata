@@ -7,15 +7,15 @@ axios.defaults.baseURL = `${API_BASE_URL}/api/`;
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
 axios.defaults.headers.post['X-CSRFToken'] = Cookies.get('csrftoken') || '';
 
-export function getToken(username: string, password: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    axios.post<{ token: string }>("token-auth/", {
-      username: username,
-      password: password
-    }).then(response => {
-      resolve(response.data.token);
-    }).catch(error => {
-      reject(error);
+export async function getToken(username: string, password: string): Promise<string> {
+  try {
+    const response = await axios.post<{ token: string }>("token-auth/", {
+      username,
+      password,
     });
-  });
+    return response.data.token;
+  } catch (error) {
+    // The error will be caught by the calling function in LoginView.vue
+    throw error;
+  }
 }

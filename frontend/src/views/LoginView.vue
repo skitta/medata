@@ -48,6 +48,7 @@ import { Form as AForm, Input as AInput, Button as AButton, Card as ACard, Selec
 import { useMainStore } from "@/stores";
 import { useRouter } from "vue-router";
 import { getToken } from "@/api/login";
+import { TokenStorage } from "@/utils/tokenStorage";
 
 interface FormState {
   user: string;
@@ -62,8 +63,6 @@ interface RoleOption {
 }
 
 const store = useMainStore();
-store.setToken(null);
-
 const router = useRouter();
 
 const formState = reactive<FormState>({
@@ -86,29 +85,26 @@ const roleOptions: RoleOption[] = [
 
 const submitLoading = ref<boolean>(false);
 
-const handleSubmit = (): void => {
+const handleSubmit = async (): Promise<void> => {
   submitLoading.value = true;
   const { user, password } = formState;
 
-  getToken(user, password)
-    .then((token: string) => {
-      store.setToken(token);
-      submitLoading.value = false;
-    })
-    .then(() => {
-      router.push({ name: "home" });
-    })
-    .catch((err: any) => {
-      submitLoading.value = false;
-      console.log(err);
-      if (err.code === 'ERR_NETWORK') {
-        formState.msg = "网络错误";
-      } else if (err.code === 'ERR_BAD_REQUEST') {
-        formState.msg = "用户名或密码错误";
-      } else {
-        formState.msg = "未知错误";
-      }
-    });
+  try {
+    const token = await getToken(user, password);
+    TokenStorage.setToken(token);
+    router.push({ name: 'home' });
+  } catch (err: any) {
+    console.error('Login failed:', err);
+    if (err.code === 'ERR_NETWORK') {
+      formState.msg = '网络错误';
+    } else if (err.code === 'ERR_BAD_REQUEST') {
+      formState.msg = '用户名或密码错误';
+    } else {
+      formState.msg = '未知错误';
+    }
+  } finally {
+    submitLoading.value = false;
+  }
 };
 
 const handleInputChange = (): void => {

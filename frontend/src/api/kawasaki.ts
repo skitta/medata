@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import Cookies from "js-cookie";
+import { TokenStorage } from "@/utils/tokenStorage";
 import type {
   ApiResponse,
   Patient,
@@ -18,15 +19,14 @@ axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded
 axios.defaults.headers.post['X-CSRFToken'] = Cookies.get('csrftoken') || '';
 
 axios.interceptors.request.use(
-  config => {
-    const store = sessionStorage.getItem('store');
-    const token = store ? JSON.parse(store).token : null;
+  (config) => {
+    const token = TokenStorage.getToken();
     if (token) {
       config.headers.Authorization = `Token ${token}`;
     }
     return config;
   },
-  error => {
+  (error) => {
     return Promise.reject(error);
   }
 );

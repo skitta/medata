@@ -1,4 +1,6 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
+import { useMainStore } from '@/stores'
+import { TokenStorage } from '@/utils/tokenStorage'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -50,9 +52,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _from, next) => {
-  const store = sessionStorage.getItem('store')
-  const token = store ? JSON.parse(store).token : null
-  if (to.name !== 'login' && token === null) {
+  if (to.name !== 'login' && !TokenStorage.isTokenValid()) {
     next({ name: 'login' })
   } else {
     next()
