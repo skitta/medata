@@ -1,43 +1,127 @@
-# medata - 科研信息管理系统
+# medata: a medical research data management system
 
-## 后端
+This is a medical research data management system (medata) for Kawasaki disease research. The application is a full-stack web application with a Django REST API backend and Vue.js frontend.
 
-- django-rest-framework
+## Architecture
 
-## 数据库
+### Backend (Django)
+- **Framework**: Django 4.0+ with Django REST Framework
+- **Database**: SQLite3 for development/production
+- **Main App**: `apps/kawasaki` contains all medical data models and APIs
+- **Key Models**: Patient, BloodTest, LiverFunction, Echocardiography, InfectiousTest, Samples, CustomTest
+- **Authentication**: Token-based authentication via DRF
+- **Special Features**: Implements optimistic locking for data integrity
 
-sqlite3 微型数据库
+### Frontend (Vue.js)
+- **Framework**: Vue 3 with Composition API and TypeScript
+- **Build Tool**: Vite 5.x with TypeScript support
+- **UI Framework**: Ant Design Vue 3
+- **State Management**: Pinia 3 (migrated from Vuex)
+- **Routing**: Vue Router 4 with hash history
+- **Charts**: Uses @antv/g2plot for data visualization
+- **Type Checking**: Full TypeScript integration with vue-tsc
 
-## 前端
+### Key API Endpoints
+- `/api/kawasaki/patients/` - Patient CRUD operations
+- `/api/kawasaki/blood-tests/` - Blood test data
+- `/api/kawasaki/liver-functions/` - Liver function tests
+- `/api/kawasaki/echocardiography/` - Cardiac imaging data
+- `/api/kawasaki/infectious-tests/` - Infectious disease markers
+- `/api/kawasaki/samples/` - Sample tracking
+- `/api/kawasaki/custom-tests/` - Custom medical tests
 
-* vue (iview / view-design)
+## Development Commands
 
-## 部署
+### Frontend Development
+```bash
+cd frontend
 
-### 下载
+# Install dependencies
+npm install
 
-`git clone https://github.com/skitta/medata.git`
+# Development server
+npm run dev
 
-### 安装依赖
+# Production build
+npm run build
 
-1. python 依赖
-	`pip install -r requirements.txt`
-2. node 依赖
-	```
-	cd frontend
-	npm install
-	```
+# Lint code
+npm run lint
 
-### 前端编译
+# Type check TypeScript
+npm run type-check
+```
 
-1. 进入 `frontend` 目录
-2. 修改 `src/api/**.js` 文件中的请求地址，与服务器地址保持一致
-3. `npm run build`
+### Backend Development
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
 
-### 后端设置
+# Run development server
+python manage.py runserver
 
-1. 进入 `medata/medata` 目录
-2. 修改 `settings.py` 文件中的 `DEBUG = True` 为 `DEBUG = False`
-3. 取消 `settings.py` 文件末尾关于 HTTPS 的注释
-4. 在 `metata` 目录下运行 `python manage.py collectstatic`
+# Database migrations
+python manage.py makemigrations
+python manage.py migrate
 
+# Create superuser
+python manage.py createsuperuser
+
+# Collect static files (for production)
+python manage.py collectstatic
+```
+
+### Docker Development
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Environment variables required in .env:
+# DJANGO_SECRET_KEY, DEBUG, DJANGO_LOGLEVEL, DJANGO_ALLOWED_HOSTS
+```
+
+## Code Architecture Details
+
+### Django Models Architecture
+- **OptimisticLockingModel**: Base abstract model providing optimistic locking via version field
+- **Patient**: Central model with foreign key relationships to all test types
+- **Medical Test Models**: BloodTest, LiverFunction, Echocardiography, InfectiousTest, CustomTest
+- **Sample Management**: Samples model for biological specimen tracking
+- **Grouping**: EnrollGroup model for patient categorization
+
+### Vue.js Component Structure
+- **Views**: Main page components (LoginView, HomeView, DashboardView, ManagerView)
+- **Nested Routes**: Add patient/tests under AddView with dynamic layout
+- **Components**: Reusable InlineForm, PatientDetail components
+- **Store State**: Token authentication, patient data, groups, test results
+
+### Data Export Features
+- All ViewSets include export functionality returning CSV files
+- Bulk export available via `/api/kawasaki/export-all/` endpoint
+- Uses django-import-export for data serialization
+
+### Authentication Flow
+- Token-based authentication using DRF TokenAuthentication
+- Frontend stores token in Vuex store
+- Router guards prevent unauthenticated access
+- Login endpoint: `/api/token-auth/`
+
+## Important Configuration
+
+### Production Settings
+- Set `DEBUG = False` in settings.py for production
+- Configure `ALLOWED_HOSTS` appropriately
+- HTTPS configuration is enabled by default
+- Static files served via WhiteNoise middleware
+
+### CORS Configuration
+- `CORS_ORIGIN_ALLOW_ALL = True` for development
+- Adjust CORS settings for production security
+
+## Development Notes
+
+- The codebase uses Chinese comments and verbose names for medical terms
+- All medical data models inherit from OptimisticLockingModel for concurrent access safety
+- Frontend uses hash-based routing for better compatibility
+- Static files are built into `frontend/dist` and served by Django
+- Database uses Asia/Shanghai timezone

@@ -8,11 +8,12 @@
 # project
 *.sqlite3
 **/__pycache__
-/static
-/frontend/dist
+**/static
+**/frontend/dist
 
 # node
 **/node_modules
 
 .venv
 SOFTWARE_COPYRIGHT_APPLICATION.md
+CLAUDE.md
