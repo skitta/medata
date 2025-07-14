@@ -8,7 +8,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AButton: typeof import('ant-design-vue/es')['Button']
     AFormItem: typeof import('ant-design-vue/es')['FormItem']
     InlineForm: typeof import('./src/components/InlineForm.vue')['default']
     PatientDetail: typeof import('./src/components/PatientDetail.vue')['default']

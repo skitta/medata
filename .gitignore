@@ -8,6 +8,8 @@
 # project
 *.sqlite3
 **/__pycache__
+/static
+/frontend/dist
 
 # node
 **/node_modules
