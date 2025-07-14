@@ -60,19 +60,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, computed } from "vue";
+import { ref, watch, computed } from "vue";
 import { Table as ATable, Tag as ATag, Input as AInput, Row as ARow, Col as ACol, Space as ASpace, Button as AButton, Dropdown as ADropdown, Menu as AMenu, MenuItem as AMenuItem, Alert as AAlert } from "ant-design-vue";
 import { usePagination } from 'vue-request'
-import { getGroups, getPatients, getTestsByPatientId, getExportFile } from "@/api/kawasaki";
+import { getPatients, getTestsByPatientId, getExportFile } from "@/api/kawasaki";
 import { SearchOutlined, DownloadOutlined } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
 import { useMainStore } from "@/stores";
-import { SelectOption } from "@/types/api";
 
-const groupList = ref<SelectOption[]>([]);
 const alertMessage = ref("");
 const alertType = ref<"error" | "warning" | "success" | "info">("info");
 const exportLoading = ref(false);
+const store = useMainStore();
+const router = useRouter();
 
 const clearAlert = () => {
   alertMessage.value = "";
@@ -82,10 +82,6 @@ const showAlert = (message: string, type: "error" | "warning" | "success" | "inf
   alertMessage.value = message;
   alertType.value = type;
 };
-
-onMounted(async () => {
-  groupList.value = await getGroups();
-});
 
 const columns = computed((): any[] => [
   {
@@ -109,7 +105,7 @@ const columns = computed((): any[] => [
     title: "分组",
     dataIndex: "group",
     key: "group",
-    filters: groupList.value.map(group => ({ text: group.label, value: group.value })),
+    filters: store.groupOptions,
     responsive: ["md"] as any,
   },
   {
@@ -170,7 +166,7 @@ const dataSource = computed(() => {
       registered_ID: patient.registered_ID,
       full_name: patient.full_name,
       in_date: patient.in_date,
-      group: groupList.value.find(item => item.value === patient.group)?.label || "未确定",
+      group: store.getGroupNameById(patient.group),
       tags: tags,
       creation_info: `${patient.creator_name || 'N/A'} (${formatDate(patient.created_at)})`,
       modification_info: `${patient.modifier_name || 'N/A'} (${formatDate(patient.modified_at)})`,
@@ -210,8 +206,6 @@ const onSearch = (e: any) => {
   apiParams.value.search = e.target.value;
 }
 
-const store = useMainStore();
-const router = useRouter();
 const gotoAdd = async (e: any) => {
   try {
     const data = await getPatients({ search: e.target.textContent });

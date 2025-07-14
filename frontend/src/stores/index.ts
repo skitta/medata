@@ -10,24 +10,29 @@ export const useMainStore = defineStore('main', {
     complete: {},
   }),
   getters: {
-    getPatient: (state: MainState): Patient | null => state.patient,
-    getGroups: (state: MainState): SelectOption[] => state.groups,
-    getTests: (state: MainState): Record<string, any> => state.tests,
     getTestByName: (state: MainState) => (name: string): any => state.tests[name],
-    getComplete: (state: MainState): Record<string, any> => state.complete,
+    groupOptions: (state: MainState) => {
+      return state.groups.map(group => ({
+        text: group.label,
+        value: group.value,
+      }))
+    },
+    getGroupNameById: (state: MainState) => (id?: number): string => {
+      return state.groups.find(group => group.value === id)?.label || '未确定'
+    }
   },
   actions: {
-    clearState() {
-      this.patient = null
-      this.groups = []
-      this.tests = {}
-      this.complete = {}
+    async initGroups() {
+      if (this.groups.length > 0) return
+      try {
+        const { getGroups } = await import('@/api/kawasaki')
+        this.groups = await getGroups()
+      } catch (error) {
+        console.error('Failed to fetch groups:', error)
+      }
     },
     setPatient(patient: Patient | null): void {
       this.patient = patient
-    },
-    setGroups(groups: SelectOption[]): void {
-      this.groups = groups
     },
     setTests(tests: Record<string, any>): void {
       this.tests = tests
@@ -47,5 +52,5 @@ export const useMainStore = defineStore('main', {
     delComplete(name: string): void {
       delete this.complete[name]
     },
-  },
+  }
 })

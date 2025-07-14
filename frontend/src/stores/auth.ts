@@ -33,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     const mainStore = useMainStore()
-    mainStore.clearState()
+    mainStore.$reset() // Reset main store state
     TokenStorage.clearToken()
     UserStorage.clearUserInfo()
     userInfo.value = null

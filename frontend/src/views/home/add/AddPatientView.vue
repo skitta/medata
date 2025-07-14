@@ -38,7 +38,7 @@
         <a-input-number v-model:value="formState.weight" style="width: 100%" />
       </a-form-item>
       <a-form-item has-feedback label="分组" name="group">
-        <a-select v-model:value="formState.group" :options="groupOptions"></a-select>
+        <a-select v-model:value="formState.group" :options="store.groups"></a-select>
       </a-form-item>
       <a-form-item label="IVIG 抵抗" name="resistance">
         <a-radio-group v-model:value="formState.resistance">
@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, toRaw, onMounted } from "vue";
+import { ref, reactive, toRaw } from "vue";
 import {
   Card as ACard, Form as AForm, Input as AInput, Select as ASelect, DatePicker as ADatePicker, InputNumber as AInputNumber, Button as AButton, Modal as AModal, Radio as ARadio, Alert as AAlert, SelectOption as ASelectOption, RadioGroup as ARadioGroup, FormItem as AFormItem
 } from "ant-design-vue";
@@ -91,15 +91,14 @@ const formState = reactive<Patient>({
   resistance: false,
   relapse: false,
 });
-const groupOptions = ref<SelectOption[]>([]);
-onMounted(async () => {
-  groupOptions.value = await getGroups();
-});
+// const groupOptions = ref<SelectOption[]>([]);
+// onMounted(async () => {
+//   groupOptions.value = await getGroups();
+// });
 
 const modalVisible = ref(false);
 const modalMsg = ref("");
 const confireLoading = ref(false);
-
 
 // 验证登记号是否已存在
 let existPatient: Patient | null = null;
