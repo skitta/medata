@@ -45,7 +45,7 @@ class EnrollGroupAdmin(admin.ModelAdmin):
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
     list_display = ('registered_ID', 'full_name', 'in_date', 'group', 'resistance', 'relapse')
-    inlines = [BloodTestInline, LiverFunctionInline, EchocardiographyInline, InfectiousTestInline, SamplesInline]
+    inlines = [BloodTestInline, LiverFunctionInline, EchocardiographyInline, InfectiousTestInline, CustomTestInline, SamplesInline]
 
 
 @admin.register(BloodTest)
@@ -55,7 +55,7 @@ class BloodTestAdmin(admin.ModelAdmin):
 
 @admin.register(LiverFunction)
 class LiverFunctionAdmin(admin.ModelAdmin):
-    list_display = ('patient', 'date', 'ast', 'alt', 'pa')
+    list_display = ('patient', 'date', 'ast', 'alt', 'tb', 'alb')
 
 
 @admin.register(Echocardiography)

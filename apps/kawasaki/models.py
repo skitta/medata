@@ -100,10 +100,10 @@ class LiverFunction(OptimisticLockingModel):
     ast = models.IntegerField(null=True, verbose_name='AST', blank=True)
     alt = models.IntegerField(null=True, verbose_name='ALT', blank=True)
     
-    tb = models.FloatField(null=True, verbose_name='总胆红素', blank=True)
-    db = models.FloatField(null=True, verbose_name='直接胆红素', blank=True)
+    tbil = models.FloatField(null=True, verbose_name='总胆红素', blank=True)
+    dbil = models.FloatField(null=True, verbose_name='直接胆红素', blank=True)
+    tb = models.FloatField(null=True, verbose_name='总蛋白', blank=True)
     alb = models.FloatField(null=True, verbose_name='白蛋白', blank=True)
-    pa = models.IntegerField(null=True, verbose_name='前白蛋白', blank=True)
 
     def __str__(self):
         return "{patient}({date})".format(patient=self.patient.full_name, date=self.date)

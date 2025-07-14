@@ -108,10 +108,10 @@ const liverFunction: InlineFormField = {
   date: { type: 'date', label: '日期' },
   ast: { type: 'number', label: 'AST' },
   alt: { type: 'number', label: 'ALT' },
-  tb: { type: 'number', label: 'TBIL' },
-  db: { type: 'number', label: 'DBIL' },
-  alb: { type: 'number', label: 'ALB' },
-  pa: { type: 'number', label: 'PA' },
+  tbil: { type: 'number', label: '总胆红素' },
+  dbil: { type: 'number', label: '直接胆红素' },
+  tb: { type: 'number', label: '总蛋白' },
+  alb: { type: 'number', label: '白蛋白' },
 };
 const echocardiography: InlineFormField = {
   date: { type: 'date', label: '日期' },
