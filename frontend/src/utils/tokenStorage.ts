@@ -1,27 +1,25 @@
 import CryptoJS from 'crypto-js'
 
 const SECRET_KEY = 'medata-token-encryption-key-2024'
-const TOKEN_KEY = 'mt_token'
-const EXPIRY_KEY = 'mt_expiry'
-const USERNAME_KEY = 'mt_fullname'  // Changed to store full name instead of username
+const TOKEN_STORAGE_KEY = 'mt_secure_token'
 
-export interface SecureToken {
-  token: string
+interface StoredToken {
+  encryptedToken: string
   expiresAt: number
 }
 
 export class TokenStorage {
   /**
-   * Encrypts and stores the token in localStorage.
-   * @param token The token string to store.
+   * Encrypts and stores the token object in localStorage.
+   * @param token The raw token string to store.
    * @param expiresInHours The number of hours until the token expires. Defaults to 24.
    */
   static setToken(token: string, expiresInHours: number = 24): void {
     try {
       const expiresAt = Date.now() + expiresInHours * 60 * 60 * 1000
       const encryptedToken = CryptoJS.AES.encrypt(token, SECRET_KEY).toString()
-      localStorage.setItem(TOKEN_KEY, encryptedToken)
-      localStorage.setItem(EXPIRY_KEY, expiresAt.toString())
+      const tokenData: StoredToken = { encryptedToken, expiresAt }
+      localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokenData))
     } catch (error) {
       console.error('Error storing token:', error)
     }
@@ -34,19 +32,17 @@ export class TokenStorage {
    */
   static getToken(): string | null {
     try {
-      const encryptedToken = localStorage.getItem(TOKEN_KEY)
-      const expiry = localStorage.getItem(EXPIRY_KEY)
+      const tokenDataString = localStorage.getItem(TOKEN_STORAGE_KEY)
+      if (!tokenDataString) return null
 
-      if (!encryptedToken || !expiry) {
-        return null
-      }
+      const tokenData: StoredToken = JSON.parse(tokenDataString)
 
-      if (Date.now() > parseInt(expiry, 10)) {
+      if (Date.now() > tokenData.expiresAt) {
         this.clearToken()
         return null
       }
 
-      const bytes = CryptoJS.AES.decrypt(encryptedToken, SECRET_KEY)
+      const bytes = CryptoJS.AES.decrypt(tokenData.encryptedToken, SECRET_KEY)
       const decryptedToken = bytes.toString(CryptoJS.enc.Utf8)
 
       return decryptedToken || null
@@ -65,23 +61,26 @@ export class TokenStorage {
     return this.getToken() !== null
   }
 
+  private static getStoredToken(): StoredToken | null {
+    try {
+      const tokenDataString = localStorage.getItem(TOKEN_STORAGE_KEY)
+      return tokenDataString ? JSON.parse(tokenDataString) : null
+    } catch {
+      return null
+    }
+  }
+
   /**
    * Checks if the token will expire within a specified time frame.
    * @param minutes The time frame in minutes to check for expiration. Defaults to 5.
    * @returns True if the token is expiring soon, false otherwise.
    */
   static isTokenExpiringSoon(minutes: number = 5): boolean {
-    try {
-      const expiry = localStorage.getItem(EXPIRY_KEY)
-      if (!expiry) return false
+    const tokenData = this.getStoredToken()
+    if (!tokenData) return false
 
-      const expiryTime = parseInt(expiry, 10)
-      const threshold = Date.now() + minutes * 60 * 1000
-
-      return expiryTime <= threshold
-    } catch {
-      return false
-    }
+    const threshold = Date.now() + minutes * 60 * 1000
+    return tokenData.expiresAt <= threshold
   }
 
   /**
@@ -89,55 +88,18 @@ export class TokenStorage {
    * @returns The remaining time in milliseconds, or 0 if not applicable.
    */
   static getTokenTimeRemaining(): number {
-    try {
-      const expiry = localStorage.getItem(EXPIRY_KEY)
-      if (!expiry) return 0
+    const tokenData = this.getStoredToken()
+    if (!tokenData) return 0
 
-      const remaining = parseInt(expiry, 10) - Date.now()
-      return Math.max(0, remaining)
-    } catch {
-      return 0
-    }
+    const remaining = tokenData.expiresAt - Date.now()
+    return Math.max(0, remaining)
   }
 
   /**
-   * Removes the token and its expiry from localStorage.
+   * Removes the token from localStorage.
    */
   static clearToken(): void {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(EXPIRY_KEY)
-  }
-
-  /**
-   * Stores the full name in localStorage.
-   * @param fullName The full name string to store.
-   */
-  static setUsername(fullName: string): void {
-    try {
-      localStorage.setItem(USERNAME_KEY, fullName)
-    } catch (error) {
-      console.error('Error storing username:', error)
-    }
-  }
-
-  /**
-   * Retrieves the full name from localStorage.
-   * @returns The full name string, or null.
-   */
-  static getUsername(): string | null {
-    try {
-      return localStorage.getItem(USERNAME_KEY)
-    } catch (error) {
-      console.error('Error retrieving username:', error)
-      return null
-    }
-  }
-
-  /**
-   * Removes the username from localStorage.
-   */
-  static clearUsername(): void {
-    localStorage.removeItem(USERNAME_KEY)
+    localStorage.removeItem(TOKEN_STORAGE_KEY)
   }
 
   /**
@@ -147,12 +109,11 @@ export class TokenStorage {
    */
   static refreshTokenExpiry(expiresInHours: number = 24): boolean {
     try {
-      const encryptedToken = localStorage.getItem(TOKEN_KEY)
-      if (!encryptedToken) return false
+      const tokenData = this.getStoredToken()
+      if (!tokenData) return false
 
-      // Re-set the token with a new expiry without re-encrypting
-      const expiresAt = Date.now() + expiresInHours * 60 * 60 * 1000
-      localStorage.setItem(EXPIRY_KEY, expiresAt.toString())
+      tokenData.expiresAt = Date.now() + expiresInHours * 60 * 60 * 1000
+      localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokenData))
       return true
     } catch {
       return false

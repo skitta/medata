@@ -150,3 +150,10 @@ export interface LoginRequest {
   username: string;
   password: string;
 }
+
+// 定义令牌响应类型
+export interface TokenResponse {
+  token: string
+  user_id: number,
+  full_name: string
+}

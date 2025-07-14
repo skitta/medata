@@ -50,7 +50,8 @@ class CustomAuthToken(ObtainAuthToken):
 
         return Response({
             'token': token.key,
-            'full_name': full_name or user.username
+            'user_id': user.id,
+            'full_name': full_name or user.username,
         })
 
 
@@ -80,7 +81,9 @@ class PatientViewSet(OptimisticLockingViewSet):
     filterset_fields = {
         'group': ['exact', 'in'],
         'resistance': ['exact'],
-        'relapse': ['exact']
+        'relapse': ['exact'],
+        'creator': ['exact'],
+        'modifier': ['exact'],
     }
 
     def perform_create(self, serializer):

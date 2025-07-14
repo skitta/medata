@@ -1,9 +1,6 @@
 import { authApi } from '@/plugins/axios'
+import { TokenResponse } from '@/types/api'
 
-interface TokenResponse {
-  token: string
-  full_name: string
-}
 
 export async function getToken(username: string, password: string): Promise<TokenResponse> {
   try {

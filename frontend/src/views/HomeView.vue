@@ -1,34 +1,62 @@
 <template>
   <a-layout>
-    <a-layout-header>
-      <div class="logo"></div>
-      <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="horizontal" :style="{ lineHeight: '64px' }"
-        @select="changeRouter">
-        <a-menu-item key="dashboard">
-          <template #icon>
-            <bar-chart-outlined />
-          </template>
-          总览
-        </a-menu-item>
-        <a-menu-item key="add-patient">
-          <template #icon>
-            <plus-square-outlined />
-          </template>
-          添加
-        </a-menu-item>
-        <a-menu-item key="manager">
-          <template #icon>
-            <user-outlined />
-          </template>
-          管理
-        </a-menu-item>
-      </a-menu>
-      <div class="user-info">
-        <span>您好，{{ fullName }}</span>
-        <a-button type="link" size="small" @click="logout">
-          退出
-        </a-button>
-      </div>
+    <a-layout-header class="header">
+      <a-row>
+        <a-col :xs="0" :sm="2" :md="2" :lg="1" :xl="1">
+          <div class="logo"></div>
+        </a-col>
+        <a-col :xs="2" :sm="8" :md="16" :lg="17" :xl="18">
+          <a-dropdown>
+            <a-button class="mobile-menu" type="primary">
+              <template #icon>
+                <MenuOutlined />
+              </template>
+            </a-button>
+            <template #overlay>
+              <a-menu v-model:selectedKeys="selectedKeys" theme="dark" @select="changeRouter">
+                <a-menu-item key="dashboard">
+                  总览
+                </a-menu-item>
+                <a-menu-item key="add-patient">
+                  添加
+                </a-menu-item>
+                <a-menu-item key="manager">
+                  管理
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+          <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="horizontal"
+            :style="{ lineHeight: '64px' }" @select="changeRouter" class="desktop-menu">
+            <a-menu-item key="dashboard">
+              <template #icon>
+                <bar-chart-outlined />
+              </template>
+              总览
+            </a-menu-item>
+            <a-menu-item key="add-patient">
+              <template #icon>
+                <plus-square-outlined />
+              </template>
+              添加
+            </a-menu-item>
+            <a-menu-item key="manager">
+              <template #icon>
+                <user-outlined />
+              </template>
+              管理
+            </a-menu-item>
+          </a-menu>
+        </a-col>
+        <a-col :xs="22" :sm="14" :md="6" :lg="6" :xl="5" style="text-align: right">
+          <div class="user-info">
+            <span>您好，{{ fullName }}</span>
+            <a-button type="link" size="small" @click="logout">
+              退出
+            </a-button>
+          </div>
+        </a-col>
+      </a-row>
     </a-layout-header>
     <a-layout-content>
       <router-view v-slot="{ Component }">
@@ -45,11 +73,12 @@
 
 <script setup lang="ts">
 import { onMounted, ref, computed } from "vue";
-import { Layout as ALayout, Menu as AMenu, LayoutHeader as ALayoutHeader, LayoutContent as ALayoutContent, LayoutFooter as ALayoutFooter, MenuItem as AMenuItem, Button as AButton } from "ant-design-vue";
+import { Layout as ALayout, Menu as AMenu, LayoutHeader as ALayoutHeader, LayoutContent as ALayoutContent, LayoutFooter as ALayoutFooter, MenuItem as AMenuItem, Button as AButton, Row as ARow, Col as ACol, Dropdown as ADropdown } from "ant-design-vue";
 import {
   BarChartOutlined,
   PlusSquareOutlined,
   UserOutlined,
+  MenuOutlined,
 } from "@ant-design/icons-vue";
 import { onBeforeRouteUpdate, useRouter } from "vue-router";
 import type { SelectInfo } from "ant-design-vue/es/menu/src/interface";
@@ -100,14 +129,36 @@ onBeforeRouteUpdate((to) => {
 }
 
 .user-info {
-  position: absolute;
-  top: 0;
-  right: 50px;
+  float: right;
   color: #fff;
 }
 
 .user-info span {
   margin-right: 16px;
+}
+
+.header {
+  padding: 0 40px;
+}
+
+.mobile-menu {
+  display: none;
+}
+
+@media (max-width: 425px) {
+  .desktop-menu {
+    display: none;
+  }
+
+  .mobile-menu {
+    display: block;
+    float: left;
+    margin-top: 16px;
+  }
+
+  .header {
+  padding: 0 10px;
+}
 }
 
 [data-theme="dark"] .site-layout-content {
