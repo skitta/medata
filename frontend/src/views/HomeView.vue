@@ -2,10 +2,10 @@
   <a-layout>
     <a-layout-header class="header">
       <a-row>
-        <a-col :xs="0" :sm="2" :md="2" :lg="1" :xl="1">
+        <a-col :xs="0" :sm="4" :md="2" :lg="2" :xl="1">
           <div class="logo"></div>
         </a-col>
-        <a-col :xs="2" :sm="8" :md="16" :lg="17" :xl="18">
+        <a-col :xs="2" :sm="10" :md="16" :lg="17" :xl="18">
           <a-dropdown>
             <a-button class="mobile-menu" type="primary">
               <template #icon>
@@ -13,7 +13,7 @@
               </template>
             </a-button>
             <template #overlay>
-              <a-menu v-model:selectedKeys="selectedKeys" theme="dark" @select="changeRouter">
+              <a-menu v-model:selectedKeys="selectedKeys" theme="dark" @click="changeRouter">
                 <a-menu-item key="dashboard">
                   总览
                 </a-menu-item>
@@ -48,7 +48,7 @@
             </a-menu-item>
           </a-menu>
         </a-col>
-        <a-col :xs="22" :sm="14" :md="6" :lg="6" :xl="5" style="text-align: right">
+        <a-col :xs="22" :sm="8" :md="6" :lg="6" :xl="5" style="text-align: right">
           <div class="user-info">
             <span>您好，{{ fullName }}</span>
             <a-button type="link" size="small" @click="logout">
@@ -89,10 +89,11 @@ const authStore = useAuthStore();
 const fullName = computed(() => authStore.fullName);
 
 const router = useRouter();
-const changeRouter = (info: SelectInfo): void => {
-  selectedKeys.value = info.selectedKeys as string[];
+const changeRouter = (info: SelectInfo | any): void => {
+  const key = (info.key || info.selectedKeys[0]) as string;
+  selectedKeys.value = [key];
   router.push({
-    name: info.selectedKeys[0] as string,
+    name: key,
   });
 };
 
@@ -121,7 +122,7 @@ onBeforeRouteUpdate((to) => {
   float: left;
   width: 44px;
   height: 44px;
-  margin: 10px 24px 10px 0;
+  margin: 10px 10px 10px 0;
   background-image: url("@/assets/logo.svg");
   background-size: auto;
   background-repeat: no-repeat;
