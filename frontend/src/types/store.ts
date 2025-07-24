@@ -15,6 +15,6 @@ export interface TestData {
 }
 
 export interface CompleteData {
-  name: string;
+  name:string;
   data: any;
 }

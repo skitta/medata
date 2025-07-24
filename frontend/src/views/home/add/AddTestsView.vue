@@ -224,6 +224,9 @@ const postData = () => {
       if (oneTest.id !== undefined) {
         promiseList.push(
           updateTestByName(key, oneTest.id, oneTest)
+            .then(data => {
+              tests[key][index] = data;
+            })
         );
       } else {
         oneTest.patient = patient.value.id!;

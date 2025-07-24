@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import type { MainState, TestData, CompleteData } from '@/types/store'
-import type { Patient, SelectOption } from '@/types/api'
+import type { Patient } from '@/types/api'
 
 export const useMainStore = defineStore('main', {
   state: (): MainState => ({

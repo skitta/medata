@@ -18,7 +18,6 @@ import 'dayjs/locale/zh-cn';
 dayjs.locale('zh-cn');
 
 const store = useMainStore();
-store.initGroups();
 
 const storedState = sessionStorage.getItem("store");
 if (storedState) {

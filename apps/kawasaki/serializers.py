@@ -7,7 +7,7 @@ class VersionedSerializer(serializers.ModelSerializer):
 	class Meta:
 		abstract = True
 		extra_kwargs = {
-			'version': {'required': False, 'read_only': True}
+			'version': {'required': False}
 		}
 
 	def validate(self, attrs):
@@ -15,9 +15,21 @@ class VersionedSerializer(serializers.ModelSerializer):
 			request = self.context.get('request')
 			if request and hasattr(request, 'data') and 'version' in request.data:
 				provided_version = request.data['version']
-				if provided_version != self.instance.version:
+				instance_version = self.instance.version
+				
+				# Convert both to int for comparison to handle type mismatches
+				# (Frontend sends strings, database stores integers)
+				try:
+					provided_version_int = int(provided_version)
+					instance_version_int = int(instance_version)
+					
+					if provided_version_int != instance_version_int:
+						raise serializers.ValidationError({
+							'version': 'Stale data detected. Please reload and try again.'
+						})
+				except (ValueError, TypeError):
 					raise serializers.ValidationError({
-						'version': 'Stale data detected. Please reload and try again.'
+						'version': 'Invalid version format.'
 					})
 		return attrs
 

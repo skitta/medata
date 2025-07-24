@@ -24,6 +24,8 @@ export const useAuthStore = defineStore('auth', () => {
       isAuthenticated.value = true
       fullName.value = response.full_name
       userId.value = response.user_id
+      const mainStore = useMainStore()
+      mainStore.initGroups();
       await router.push({ name: 'home' })
     } catch (error) {
       isAuthenticated.value = false

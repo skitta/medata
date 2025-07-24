@@ -15,23 +15,22 @@
               <a-col :span="5" v-if="item.type === 'date'">
                 <a-form-item name="date">
                   <a-date-picker v-model:value="inputData.date" placeholder="选择日期" value-format="YYYY-MM-DD"
-                    style="width: 100%" @change="handleChange" />
+                    style="width: 100%" />
                 </a-form-item>
               </a-col>
               <a-col :span="span" v-else-if="item.type === 'number'">
                 <a-form-item :name="key">
-                  <a-input-number v-model:value="inputData[key]" :placeholder="item.label" @change="handleChange" />
+                  <a-input-number v-model:value="inputData[key]" :placeholder="item.label" />
                 </a-form-item>
               </a-col>
               <a-col :span="span" v-else-if="item.type === 'string'">
                 <a-form-item :name="key">
-                  <a-input v-model:value="inputData[key]" :placeholder="item.label" @change="handleChange" />
+                  <a-input v-model:value="inputData[key]" :placeholder="item.label" />
                 </a-form-item>
               </a-col>
               <a-col :span="span" v-else-if="item.type === 'select'">
                 <a-form-item :name="key">
-                  <a-select v-model:value="inputData[key]" :options="item.options ?? []" :placeholder="item.label"
-                    @change="handleChange"></a-select>
+                  <a-select v-model:value="inputData[key]" :options="item.options ?? []" :placeholder="item.label"></a-select>
                 </a-form-item>
               </a-col>
             </template>
@@ -92,7 +91,7 @@ const props = defineProps({
 
 const store = useMainStore();
 const dynamicValidateForm = reactive({
-  datas: store.getTestByName(props.name as string) ?? [],
+  datas: JSON.parse(JSON.stringify(store.getTestByName(props.name as string) ?? [])),
 });
 const showSaveButton = ref(false);
 const disableSave = ref(true);
@@ -123,63 +122,44 @@ const addDomain = () => {
   dynamicValidateForm.datas.push(newdata);
 };
 
-// 修改表单项事件
-const handleChange = () => {
-  showSaveButton.value = true;
-};
-
 // 提交表单事件
-let storedDataLength: number = store.getTestByName(props.name)?.length ?? 0;
+const storedData = ref(JSON.parse(JSON.stringify(store.getTestByName(props.name as string) ?? [])));
 const onSave = () => {
   // 逻辑事件：
   // 对于一个空 datas，完成了一次表单填写，并点击了保存按钮 => store 保存了键值对数据
   // 然后删除了该表单，并点击了保存按钮 => store 将保存空键值对数据
   // 以下条件判断将删除该空键值对数据
-  if (dynamicValidateForm.datas.length === 0) {
+  const rawData = toRaw(dynamicValidateForm.datas);
+  if (rawData.length === 0) {
     store.delTest(props.name);
-    storedDataLength = 0;
   } else {
-    store.addTests({ name: props.name, data: toRaw(dynamicValidateForm.datas) });
-    storedDataLength = store.getTestByName(props.name).length;
+    store.addTests({ name: props.name, data: rawData });
   }
+  storedData.value = JSON.parse(JSON.stringify(rawData));
   showSaveButton.value = false;
+  store.addComplete({ name: props.name, data: true });
 };
-
-// 监听所有表单是否完成，以控制完成状态
-watch([showSaveButton, disableSave], ([showBtnValue, disabled]: [boolean, boolean]) => {
-  if (showBtnValue === false && disabled === false) {
-    dynamicValidateForm.datas.forEach((item:any
-    ) => {
-      if (item.id === undefined) {
-        store.addComplete({
-          name: props.name,
-          data: true
-        });
-      } else {
-        store.delComplete(props.name);
-      }
-    })
-  } else {
-    store.addComplete({
-      name: props.name,
-      data: false
-    });
-  }
-});
 
 // 监听表单数据是否完整，以控制保存按钮的启用状态
 watch(dynamicValidateForm.datas, (currentValue: any[]) => {
-  showSaveButton.value = (currentValue.length === storedDataLength) ? false : true;
-  currentValue.forEach(item => {
-    for (let key in item) {
-      if (item[key] === '') {
-        disableSave.value = true;
-        return;
-      }
-    }
+  // 检查数据是否有修改
+  const isModified = JSON.stringify(currentValue) !== JSON.stringify(storedData.value);
+  showSaveButton.value = isModified;
+
+  // 检查数据是否填写完整
+  if (currentValue.length === 0) {
     disableSave.value = false;
-  });
-});
+  } else {
+    const isAnyIncomplete = currentValue.some(item => {
+      return Object.values(item).some(value => value === '' || value === null);
+    });
+    disableSave.value = isAnyIncomplete;
+  }
+  
+  if (isModified) {
+    store.addComplete({ name: props.name, data: false });
+  }
+}, { deep: true });
 </script>
 
 <style scoped>
