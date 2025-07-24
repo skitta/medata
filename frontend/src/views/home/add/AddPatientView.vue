@@ -64,13 +64,10 @@
 
 <script setup lang="ts">
 import { ref, reactive, toRaw } from "vue";
-import {
-  Card as ACard, Form as AForm, Input as AInput, Select as ASelect, DatePicker as ADatePicker, InputNumber as AInputNumber, Button as AButton, Modal as AModal, Radio as ARadio, Alert as AAlert, SelectOption as ASelectOption, RadioGroup as ARadioGroup, FormItem as AFormItem
-} from "ant-design-vue";
 import { useMainStore } from "@/stores";
-import { getGroups, getPatients, getTestsByPatientId, addPatient } from "@/api/kawasaki";
+import { getPatients, getTestsByPatientId, addPatient } from "@/api/kawasaki";
 import { useRouter } from "vue-router";
-import type { Patient, SelectOption } from "@/types/api";
+import type { Patient } from "@/types/api";
 import type { Rule } from 'ant-design-vue/es/form';
 import type { FormInstance } from 'ant-design-vue';
 import { useErrorHandler } from "@/composables/useErrorHandler";
@@ -91,10 +88,6 @@ const formState = reactive<Patient>({
   resistance: false,
   relapse: false,
 });
-// const groupOptions = ref<SelectOption[]>([]);
-// onMounted(async () => {
-//   groupOptions.value = await getGroups();
-// });
 
 const modalVisible = ref(false);
 const modalMsg = ref("");

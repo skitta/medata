@@ -60,7 +60,6 @@ import {
   nextTick,
   ref,
 } from "vue";
-import { Row as ARow, Col as ACol, Card as ACard, Statistic as AStatistic, Space as ASpace } from "ant-design-vue";
 import { getSummary, getCountByMonth, getAgeByGroup } from "@/api/kawasaki";
 import type { Summary, MonthlyCount, AgeDataByGroup } from "@/types/api";
 

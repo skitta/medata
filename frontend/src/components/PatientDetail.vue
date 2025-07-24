@@ -13,7 +13,6 @@
 </template>
 
 <script setup lang="ts">
-import { Descriptions as ADescriptions, DescriptionsItem as ADescriptionsItem } from "ant-design-vue";
 import { useMainStore } from "@/stores";
 import { Patient } from "@/types/api";
 

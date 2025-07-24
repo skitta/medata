@@ -44,7 +44,6 @@
 <script setup lang="ts">
 import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
 import { reactive, ref } from "vue";
-import { Form as AForm, Input as AInput, Button as AButton, Card as ACard, Select as ASelect, Alert as AAlert, InputPassword as AInputPassword } from "ant-design-vue";
 import { useAuthStore } from "@/stores/auth";
 
 interface FormState {

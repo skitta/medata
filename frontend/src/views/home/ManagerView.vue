@@ -61,7 +61,6 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
-import { Table as ATable, Tag as ATag, Input as AInput, Row as ARow, Col as ACol, Space as ASpace, Button as AButton, Dropdown as ADropdown, Menu as AMenu, MenuItem as AMenuItem, Alert as AAlert } from "ant-design-vue";
 import { usePagination } from 'vue-request'
 import { getPatients, getTestsByPatientId, getExportFile } from "@/api/kawasaki";
 import { SearchOutlined, DownloadOutlined } from "@ant-design/icons-vue";

@@ -5,6 +5,7 @@ export interface MainState {
   patient: Patient | null;
   groups: SelectOption[];
   tests: Record<string, any>;
+  originalTests: Record<string, any>; // 保存原始数据用于比较
   complete: Record<string, boolean>;
 }
 

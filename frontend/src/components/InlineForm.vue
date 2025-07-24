@@ -65,7 +65,6 @@
 
 <script setup lang="ts">
 import { reactive, ref, toRaw, watch, computed } from "vue";
-import { Form as AForm, DatePicker as ADatePicker, Input as AInput, InputNumber as AInputNumber, Row as ARow, Col as ACol, Button as AButton, Select as ASelect, FormItem as AFormItem } from "ant-design-vue";
 import { MinusCircleOutlined, PlusOutlined, CheckOutlined } from '@ant-design/icons-vue';
 import { useMainStore } from "@/stores";
 import { InlineFormField } from "@/types/components";
